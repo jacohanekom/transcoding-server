@@ -91,20 +91,32 @@ class publishThread(threading.Thread):
                     destination = self.get_series_destination(file)
                     if not os.path.isdir(destination[0]):
                         os.makedirs(destination[0])
-                    shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+
+                    if os.path.isfile(os.path.join(destination[0], destination[1])):
+                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1], uuid))
+                    else:
+                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+
                     os.remove(converted_file)
                     os.remove(file.file)
+
                     if config.SICKBEARD_ENABLED:
                         self.trigger_sickbeard_refresh(file.metadata.show)
                 elif file.metadata.type == 'movie':
                     destination = self.get_movies_path(file)
                     if not os.path.isdir(destination[0]):
                         os.makedirs(destination[0])
-                    shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+
+                    if os.path.isfile(os.path.join(destination[0], destination[1])):
+                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1], uuid))
+                    else:
+                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+
                     os.remove(converted_file)
                     os.remove(file.file)
                     if config.COUCHPOTATO_ENABLED:
                         self.trigger_couchpotato_refresh()
+
                 file.status.state = 'done'
                 self.updateStorage(uuid, file)
                 print 'done publishing file - {file}'.format(file=file.file)
