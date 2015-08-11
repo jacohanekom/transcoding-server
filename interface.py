@@ -1,4 +1,7 @@
-import uuid
+import uuid, os, config
+from guessit import PY2, u, guess_file_info
+import tmdbsimple as tmdb
+import tvdb_api
 
 class rpcInterface(object):
     def __init__(self, registered_files):
@@ -59,3 +62,53 @@ class rpcInterface(object):
 
     def get_details(self, uuid):
         return self.registered_files[uuid]
+
+    def get_show_details(self, path):
+        result = {}
+        guess = guess_file_info(path, info='filename')
+
+        if guess['type'] == "episode":
+            try:
+                result["type"] = "tv"
+                result["show"] = guess["series"]
+                result["season"] = guess["season"]
+                result["episode"] = guess["episodeNumber"]
+                result["double_episode"] = 0
+
+                t = tvdb_api.Tvdb()
+                if t[result["show"]][result["season"]][result["episode"]]["episodename"] is None:
+                    return []
+                else:
+                    return result
+            except:
+                return []
+        elif guess['type'] == "movie":
+            try:
+                result["type"] = "movie"
+                result["name"] = guess["title"]
+                result["year"] = guess["year"]
+
+                search = tmdb.Search()
+                search.movie(query=result["name"])
+                i = 0
+                for s in search.results:
+                    if int(s['release_date'][0:4]) == int(result["year"]):
+                        i+=1
+
+                if i > 0:
+                    return result
+                else:
+                    return []
+            except:
+                return []
+
+        return []
+
+    def is_file_supported(self, file):
+        filename, file_extension = os.path.splitext(file)
+
+        for ext in config.HANDBRAKE_SUPPORTED_FILES:
+            if file_extension.lower() == ext:
+                return True
+
+        return False
