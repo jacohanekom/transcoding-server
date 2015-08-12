@@ -7,7 +7,7 @@ class rpcInterface(object):
     def __init__(self, registered_files):
         self.registered_files = registered_files
 
-    def add_movie(self, file, name, year):
+    def add_movie_queue(self, file, name, year):
         for already_present in self.registered_files:
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
@@ -32,7 +32,7 @@ class rpcInterface(object):
         self.registered_files[id] = instruction
         return id
 
-    def add_tv_show(self, file, show, season, episode, double_episode):
+    def add_tv_show_queue(self, file, show, season, episode, double_episode):
         for already_present in self.registered_files:
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
@@ -63,7 +63,7 @@ class rpcInterface(object):
         self.registered_files[id] = instruction
         return id
 
-    def get_registered_shows(self):
+    def get_queue(self):
         return self.registered_files.keys()
 
     def get_details(self, uuid):
