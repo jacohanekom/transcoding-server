@@ -36,9 +36,10 @@ class metadataThread(threading.Thread):
         search = tmdb.Search()
         search.movie(query=movie)
         for s in search.results:
-            if int(s['release_date'][0:4]) == int(year):
-                response = tmdb.Movies(s['id'])
-                break
+ 	    if 'release_date' in s: 
+	   	if int(s['release_date'][0:4]) == int(year):
+                    response = tmdb.Movies(s['id'])
+                    break
 
         if response:
             results['--title'] = response.info()['title']
@@ -149,16 +150,18 @@ class metadataThread(threading.Thread):
         return result
 
     def getDictionaryPlist(self, name, list):
-        output = '<key>{name}</key>'.format(name=name)
-        output += '<array>'
-        for value in list:
-            output += '<dict>'
-            output += '<key>{name}</key>'.format(name='name')
-            output += '<string>{name}</string>'.format(name=value)
-            output += '</dict>'
-
-        output += '</array>'
-        return output
+        try:
+           output = '<key>{name}</key>'.format(name=name.encode('utf-8'))
+           output += '<array>'
+           for value in list:
+            	output += '<dict>'
+            	output += '<key>{name}</key>'.format(name='name')
+            	output += '<string>{name}</string>'.format(name=value.encode('utf-8'))
+           output += '</dict>'
+       	   output += '</array>'
+           return output
+	except:
+	   return ""
 
     def getTVCoverArt(self, showName, season, episode):
         t = tvdb_api.Tvdb(banners=True)

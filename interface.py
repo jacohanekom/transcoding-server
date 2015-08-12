@@ -2,6 +2,7 @@ import uuid, os, config
 from guessit import PY2, u, guess_file_info
 import tmdbsimple as tmdb
 import tvdb_api
+import traceback
 
 class rpcInterface(object):
     def __init__(self, registered_files):
@@ -101,17 +102,15 @@ class rpcInterface(object):
 
                 search = tmdb.Search()
                 search.movie(query=result["name"])
-                i = 0
                 for s in search.results:
-                    if int(s['release_date'][0:4]) == int(result["year"]):
-                        i+=1
+		   if 'release_date' in s:
+		        if int(s['release_date'][0:4]) == int(result["year"]):
+			   return result
 
-                if i > 0:
-                    return result
-                else:
-                    return []
-            except:
                 return []
+            except:
+		print traceback.format_exc()
+		return []
 
         return []
 
@@ -120,7 +119,10 @@ class rpcInterface(object):
 
         for ext in config.HANDBRAKE_SUPPORTED_FILES:
             if file_extension.lower() == ext:
-                if os.path.getsize(file) >= config.HANDBRAKE_MIN_SIZE:
+               print os.path.getsize(file)
+               print config.HANDBRAKE_MIN_SIZE               
+
+	       if os.path.getsize(file) >= config.HANDBRAKE_MIN_SIZE:
 		   return True
 
         return False
