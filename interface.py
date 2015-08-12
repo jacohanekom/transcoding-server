@@ -12,6 +12,9 @@ class rpcInterface(object):
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
 
+	if not self.__is_file_supported__(file):
+	    raise Exception('File not supported')
+
         instruction = type('movie', (), {})()
         setattr(instruction, 'file', file)
         metadata = type('metadata', (), {})()
@@ -33,6 +36,9 @@ class rpcInterface(object):
         for already_present in self.registered_files:
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
+	
+	if not self.__is_file_supported__(file):
+            raise Exception('File not supported')
 
         instruction = type('movie', (), {})()
         setattr(instruction, 'file', file)
@@ -63,7 +69,7 @@ class rpcInterface(object):
     def get_details(self, uuid):
         return self.registered_files[uuid]
 
-    def get_show_details(self, path):
+    def guess_details(self, path):
         result = {}
         guess = guess_file_info(path, info='filename')
 
@@ -109,11 +115,12 @@ class rpcInterface(object):
 
         return []
 
-    def is_file_supported(self, file):
+    def __is_file_supported__(self, file):
         filename, file_extension = os.path.splitext(file)
 
         for ext in config.HANDBRAKE_SUPPORTED_FILES:
             if file_extension.lower() == ext:
-                return True
+                if os.path.getsize(file) >= config.HANDBRAKE_MIN_SIZE:
+		   return True
 
         return False
