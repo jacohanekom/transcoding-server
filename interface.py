@@ -23,7 +23,7 @@ class rpcInterface(object):
         setattr(metadata, 'year', year)
         setattr(metadata, 'type', 'movie')
         status = type('status', (), {})()
-        setattr(status, 'state', 'queued')
+        setattr(status, 'state', 'Transcoding - Queued')
         setattr(status, 'percent', '0')
         setattr(status, 'time', '0')
         setattr(status, 'fps', '0')
@@ -53,7 +53,7 @@ class rpcInterface(object):
 
         status = type('status', (), {})()
 
-        setattr(status, 'state', 'queued')
+        setattr(status, 'state', 'Transcoding - Queued')
         setattr(status, 'percent', '0')
         setattr(status, 'time', '0')
         setattr(status, 'fps', '0')

@@ -1,4 +1,4 @@
-import os
+import os, sys
 import config
 import time
 import shutil
@@ -69,7 +69,7 @@ class publishThread(threading.Thread):
     def getAvailableFiles(self):
         to_be_processed = list()
         for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == 'publish':
+            if self.registered_files[uuid].status.state == 'Publish - Queued':
                 to_be_processed.append(uuid)
 
         return to_be_processed
@@ -82,43 +82,49 @@ class publishThread(threading.Thread):
         print 'Starting ' + self.name
         while True:
             for uuid in self.getAvailableFiles():
-                file = self.getStorage(uuid)
-                converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
-                file.status.state = 'publishing - processing'
-                self.updateStorage(uuid, file)
-                print 'publishing file - {file}'.format(file=file.file)
-                if file.metadata.type == 'tv':
-                    destination = self.get_series_destination(file)
-                    if not os.path.isdir(destination[0]):
-                        os.makedirs(destination[0])
+		file = self.getStorage(uuid)
+                try:
+                	converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+                	file.status.state = 'Publish - Running'
+                	self.updateStorage(uuid, file)
+                	print 'publishing file - {file}'.format(file=file.file)
+                	if file.metadata.type == 'tv':
+                    		destination = self.get_series_destination(file)
+                    		if not os.path.isdir(destination[0]):
+                        		os.makedirs(destination[0])
 
-                    if os.path.isfile(os.path.join(destination[0], destination[1])):
-                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1], uuid))
-                    else:
-                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                    		if os.path.isfile(os.path.join(destination[0], destination[1])):
+                        		raise Exception('File Already exist')
+                    		else:
+                        		shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
 
-                    os.remove(converted_file)
-                    os.remove(file.file)
+                    		os.remove(converted_file)
+                    		os.remove(file.file)
 
-                    if config.SICKBEARD_ENABLED:
-                        self.trigger_sickbeard_refresh(file.metadata.show)
-                elif file.metadata.type == 'movie':
-                    destination = self.get_movies_path(file)
-                    if not os.path.isdir(destination[0]):
-                        os.makedirs(destination[0])
+                    		if config.SICKBEARD_ENABLED:
+                        		self.trigger_sickbeard_refresh(file.metadata.show)
+                	elif file.metadata.type == 'movie':
+                    		destination = self.get_movies_path(file)
+                    
+				if not os.path.isdir(destination[0]):
+                        		os.makedirs(destination[0])
 
-                    if os.path.isfile(os.path.join(destination[0], destination[1])):
-                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1], uuid))
-                    else:
-                        shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                    		if os.path.isfile(os.path.join(destination[0], destination[1])):
+                    			raise Exception('File Already Exist')
+				else:
+                        		shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
 
-                    os.remove(converted_file)
-                    os.remove(file.file)
-                    if config.COUCHPOTATO_ENABLED:
-                        self.trigger_couchpotato_refresh()
+                    		os.remove(converted_file)
+                    		os.remove(file.file)
+                    		
+				if config.COUCHPOTATO_ENABLED:
+                        		self.trigger_couchpotato_refresh()
 
-                file.status.state = 'done'
-                self.updateStorage(uuid, file)
-                print 'done publishing file - {file}'.format(file=file.file)
+                	file.status.state = 'Publish - Done'
+                	self.updateStorage(uuid, file)
+                	print 'done publishing file - {file}'.format(file=file.file)
+		except:
+			file.status.state = 'Publish - Error - {error}'.format(error=sys.exc_info()[0])
+                        self.updateStorage(uuid, file)	
 
             time.sleep(60)

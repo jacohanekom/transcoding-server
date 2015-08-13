@@ -1,5 +1,5 @@
 import threading
-import time
+import time, sys
 import math
 import os
 import tempfile
@@ -25,7 +25,7 @@ class metadataThread(threading.Thread):
     def getAvailableFiles(self):
         to_be_processed = list()
         for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == 'metadata':
+            if self.registered_files[uuid].status.state == 'Metadata - Queued':
                 to_be_processed.append(uuid)
 
         return to_be_processed
@@ -42,8 +42,7 @@ class metadataThread(threading.Thread):
                     break
 
         if response:
-            results['--title'] = response.info()['title']
-            results['--artist'] = ''
+	    results['--title'] = response.info()['title']
             results['--comment'] = 'Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.'
             results['--genre'] = response.info()['genres'][0]['name']
             results['--year'] = '{time}T10:00:00Z'.format(time=response.info()['release_date'])
@@ -91,6 +90,8 @@ class metadataThread(threading.Thread):
         tags = {}
         results = {}
         t = tvdb_api.Tvdb(actors=True)
+	showname = t[showName]['seriesname']
+
         results['--title'] = t[showName][season][episode]['episodename']
         results['--artist'] = showName
         results['--album'] = '{showName}, season {season}'.format(showName=showName, season=season)
@@ -127,20 +128,23 @@ class metadataThread(threading.Thread):
         return tags
 
     def buildpList(self, values, studio = None):
-        formatter = xmlformatter.Formatter(indent='1', indent_char='\t', encoding_output='ISO-8859-1', preserve=['literal'])
-        output = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
-        output += '<plist version="1.0">'
-        output += '<dict>'
-        for rec in values:
-            output += rec
+        try:
+		formatter = xmlformatter.Formatter(indent='1', indent_char='\t', encoding_output='ISO-8859-1', preserve=['literal'])
+        	output = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+        	output += '<plist version="1.0">'
+        	output += '<dict>'
+        	for rec in values:
+            		output += rec
 
-        if studio:
-            output += '<key>studio</key>'
-            output += '<string>{studio}</string>'.format(studio=studio)
-        output += '</dict>'
-        output += '</plist>'
-        return formatter.format_string(output)
-
+        	if studio:
+            		output += '<key>studio</key>'
+            		output += '<string>{studio}</string>'.format(studio=studio)
+        	output += '</dict>'
+        	output += '</plist>'
+        	return formatter.format_string(output)
+	except:
+		return ""
+    
     def getSplitList(self, value):
         result = []
         if value.startswith('|'):
@@ -269,23 +273,27 @@ class metadataThread(threading.Thread):
             for uuid in self.getAvailableFiles():
                 file = self.getStorage(uuid)
                 try:
-                    print 'processing file - {file}'.format(file=file.file)
-                    file.status.state = 'processing - metadata'
+		    file.status.state = 'Metadata - Processing'
                     self.updateStorage(uuid, file)
-                    output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+                    
+
+		    output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     if file.metadata.type == 'tv':
                         tags = self.getTVShowMetaData(file.metadata.show, file.metadata.season, file.metadata.episode, self.get_hd_tag(output), self.getTVCoverArt(file.metadata.show, file.metadata.season, file.metadata.episode))
-                    elif file.metadata.type == 'movie':
+                    	if '--artist' in tags : 
+				file.metadata.show = tags['--artist'].replace(':', '-')
+
+		    elif file.metadata.type == 'movie':
                         tags = self.getMoviesMetaData(file.metadata.name, file.metadata.year, self.get_hd_tag(output), self.getMovieCoverArt(file.metadata.name, file.metadata.year))
+		        if '--title' in tags : 
+                                file.metadata.name = tags['--title'].replace(':', '-') 
+
                     if tags:
                         self.tagFile(output, tags)
-                    print 'done processing file - {file}'.format(file=file.file)
-                    file.status.state = 'publish'
+                    file.status.state = 'Publish - Queued'
                     self.updateStorage(uuid, file)
                 except:
-                    traceback.print_exc()
-                    print 'error processing file - {file}'.format(file=file.file)
-                    file.status.state = 'publish'
+                    file.status.state = 'Metadata - Error - {error}'.format(error = sys.exc_info()[0])
                     self.updateStorage(uuid, file)
 
             time.sleep(60)
