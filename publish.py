@@ -82,49 +82,49 @@ class publishThread(threading.Thread):
         print 'Starting ' + self.name
         while True:
             for uuid in self.getAvailableFiles():
-		file = self.getStorage(uuid)
+                file = self.getStorage(uuid)
                 try:
-                	converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
-                	file.status.state = 'Publish - Running'
-                	self.updateStorage(uuid, file)
-                	print 'publishing file - {file}'.format(file=file.file)
-                	if file.metadata.type == 'tv':
-                    		destination = self.get_series_destination(file)
-                    		if not os.path.isdir(destination[0]):
-                        		os.makedirs(destination[0])
+                    converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+                    file.status.state = 'Publish - Running'
+                    self.updateStorage(uuid, file)
 
-                    		if os.path.isfile(os.path.join(destination[0], destination[1])):
-                        		raise Exception('File Already exist')
-                    		else:
-                        		shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                    if file.metadata.type == 'tv':
+                        destination = self.get_series_destination(file)
 
-                    		os.remove(converted_file)
-                    		os.remove(file.file)
+                        if not os.path.isdir(destination[0]):
+                            os.makedirs(destination[0])
 
-                    		if config.SICKBEARD_ENABLED:
-                        		self.trigger_sickbeard_refresh(file.metadata.show)
-                	elif file.metadata.type == 'movie':
-                    		destination = self.get_movies_path(file)
-                    
-				if not os.path.isdir(destination[0]):
-                        		os.makedirs(destination[0])
+                        if os.path.isfile(os.path.join(destination[0], destination[1])):
+                            raise Exception('File Already exist')
+                        else:
+                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
 
-                    		if os.path.isfile(os.path.join(destination[0], destination[1])):
-                    			raise Exception('File Already Exist')
-				else:
-                        		shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                        os.remove(converted_file)
+                        os.remove(file.file)
 
-                    		os.remove(converted_file)
-                    		os.remove(file.file)
-                    		
-				if config.COUCHPOTATO_ENABLED:
-                        		self.trigger_couchpotato_refresh()
+                        if config.SICKBEARD_ENABLED:
+                            self.trigger_sickbeard_refresh(file.metadata.show)
+                    elif file.metadata.type == 'movie':
+                        destination = self.get_movies_path(file)
 
-                	file.status.state = 'Publish - Done'
-                	self.updateStorage(uuid, file)
-                	print 'done publishing file - {file}'.format(file=file.file)
-		except:
-			file.status.state = 'Publish - Error - {error}'.format(error=sys.exc_info()[0])
-                        self.updateStorage(uuid, file)	
+                        if not os.path.isdir(destination[0]):
+                            os.makedirs(destination[0])
+
+                        if os.path.isfile(os.path.join(destination[0], destination[1])):
+                            raise Exception('File Already Exist')
+                        else:
+                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+
+                        os.remove(converted_file)
+                        os.remove(file.file)
+
+                        if config.COUCHPOTATO_ENABLED:
+                            self.trigger_couchpotato_refresh()
+
+                    file.status.state = 'Publish - Done'
+                    self.updateStorage(uuid, file)
+                except:
+                    file.status.state = 'Publish - Error - {error}'.format(error=sys.exc_info()[0])
+                    self.updateStorage(uuid, file)
 
             time.sleep(60)

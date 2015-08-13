@@ -36,13 +36,13 @@ class metadataThread(threading.Thread):
         search = tmdb.Search()
         search.movie(query=movie)
         for s in search.results:
- 	    if 'release_date' in s: 
-	   	if int(s['release_date'][0:4]) == int(year):
+            if 'release_date' in s:
+                if int(s['release_date'][0:4]) == int(year):
                     response = tmdb.Movies(s['id'])
                     break
 
         if response:
-	    results['--title'] = response.info()['title']
+            results['--title'] = response.info()['title']
             results['--comment'] = 'Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.'
             results['--genre'] = response.info()['genres'][0]['name']
             results['--year'] = '{time}T10:00:00Z'.format(time=response.info()['release_date'])
@@ -90,7 +90,7 @@ class metadataThread(threading.Thread):
         tags = {}
         results = {}
         t = tvdb_api.Tvdb(actors=True)
-	showname = t[showName]['seriesname']
+        showName = t[showName]['seriesname']
 
         results['--title'] = t[showName][season][episode]['episodename']
         results['--artist'] = showName
@@ -129,21 +129,21 @@ class metadataThread(threading.Thread):
 
     def buildpList(self, values, studio = None):
         try:
-		formatter = xmlformatter.Formatter(indent='1', indent_char='\t', encoding_output='ISO-8859-1', preserve=['literal'])
-        	output = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
-        	output += '<plist version="1.0">'
-        	output += '<dict>'
-        	for rec in values:
-            		output += rec
+            formatter = xmlformatter.Formatter(indent='1', indent_char='\t', encoding_output='ISO-8859-1', preserve=['literal'])
+            output = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
+            output += '<plist version="1.0">'
+            output += '<dict>'
+            for rec in values:
+                output += rec
 
-        	if studio:
-            		output += '<key>studio</key>'
-            		output += '<string>{studio}</string>'.format(studio=studio)
-        	output += '</dict>'
-        	output += '</plist>'
-        	return formatter.format_string(output)
-	except:
-		return ""
+            if studio:
+                output += '<key>studio</key>'
+                output += '<string>{studio}</string>'.format(studio=studio)
+            output += '</dict>'
+            output += '</plist>'
+            return formatter.format_string(output)
+        except:
+            return ""
     
     def getSplitList(self, value):
         result = []
@@ -155,17 +155,17 @@ class metadataThread(threading.Thread):
 
     def getDictionaryPlist(self, name, list):
         try:
-           output = '<key>{name}</key>'.format(name=name.encode('utf-8'))
-           output += '<array>'
-           for value in list:
-            	output += '<dict>'
-            	output += '<key>{name}</key>'.format(name='name')
-            	output += '<string>{name}</string>'.format(name=value.encode('utf-8'))
-           output += '</dict>'
-       	   output += '</array>'
-           return output
-	except:
-	   return ""
+            output = '<key>{name}</key>'.format(name=name.encode('utf-8'))
+            output += '<array>'
+            for value in list:
+                output += '<dict>'
+                output += '<key>{name}</key>'.format(name='name')
+                output += '<string>{name}</string>'.format(name=value.encode('utf-8'))
+            output += '</dict>'
+            output += '</array>'
+            return output
+        except:
+            return ""
 
     def getTVCoverArt(self, showName, season, episode):
         t = tvdb_api.Tvdb(banners=True)
@@ -273,20 +273,18 @@ class metadataThread(threading.Thread):
             for uuid in self.getAvailableFiles():
                 file = self.getStorage(uuid)
                 try:
-		    file.status.state = 'Metadata - Processing'
+                    file.status.state = 'Metadata - Processing'
                     self.updateStorage(uuid, file)
-                    
 
-		    output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+                    output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     if file.metadata.type == 'tv':
                         tags = self.getTVShowMetaData(file.metadata.show, file.metadata.season, file.metadata.episode, self.get_hd_tag(output), self.getTVCoverArt(file.metadata.show, file.metadata.season, file.metadata.episode))
-                    	if '--artist' in tags : 
-				file.metadata.show = tags['--artist'].replace(':', '-')
-
-		    elif file.metadata.type == 'movie':
+                        if '--artist' in tags['standard']:
+                            file.metadata.show = tags['standard']['--artist'].replace(':', '-')
+                    elif file.metadata.type == 'movie':
                         tags = self.getMoviesMetaData(file.metadata.name, file.metadata.year, self.get_hd_tag(output), self.getMovieCoverArt(file.metadata.name, file.metadata.year))
-		        if '--title' in tags : 
-                                file.metadata.name = tags['--title'].replace(':', '-') 
+                        if '--title' in tags['standard']:
+                            file.metadata.name = tags['standard']['--title'].replace(':', '-')
 
                     if tags:
                         self.tagFile(output, tags)
