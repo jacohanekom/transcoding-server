@@ -31,7 +31,30 @@ class metadataThread(threading.Thread):
         return to_be_processed
 
     def clean_string(self, val):
-        return str(val).encode('ascii', 'xmlcharrefreplace')
+        try:
+            cleaned = ''.join([i if ord(i) < 128 else ' ' for i in val])
+            return str(cleaned).encode('ascii', 'xmlcharrefreplace')
+        except:
+            return ""
+
+    def getMovieName(self, movie, year):
+        try:
+            search = tmdb.Search()
+            search.movie(query=movie)
+            for s in search.results:
+                if 'release_date' in s:
+                    if int(s['release_date'][0:4]) == int(year):
+                        return tmdb.Movies(s['id']).info()['title']
+        except:
+            return movie
+
+    def getTVShowName(self, showName):
+        try:
+            t = tvdb_api.Tvdb()
+            return t[showName]['seriesname']
+        except:
+            return showName
+
 
     def getMoviesMetaData(self, movie, year, hddvd, image):
         tags = {}
@@ -288,6 +311,8 @@ class metadataThread(threading.Thread):
                         if '--artist' in tags['standard']:
                             file.metadata.show = tags['standard']['--artist'].replace(':', '-')
                     elif file.metadata.type == 'movie':
+                        file.metadata.name = self.getMovieName(file.metadata.name, file.metadata.year)
+
                         tags = self.getMoviesMetaData(file.metadata.name, file.metadata.year, self.get_hd_tag(output), self.getMovieCoverArt(file.metadata.name, file.metadata.year))
                         if '--title' in tags['standard']:
                             file.metadata.name = tags['standard']['--title'].replace(':', '-')

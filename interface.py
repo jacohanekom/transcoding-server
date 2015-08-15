@@ -13,8 +13,8 @@ class rpcInterface(object):
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
 
-	if not self.__is_file_supported__(file):
-	    raise Exception('File not supported')
+        if not self.__is_file_supported__(file):
+            raise Exception('File not supported')
 
         instruction = type('movie', (), {})()
         setattr(instruction, 'file', file)
@@ -37,8 +37,8 @@ class rpcInterface(object):
         for already_present in self.registered_files:
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
-	
-	if not self.__is_file_supported__(file):
+
+        if not self.__is_file_supported__(file):
             raise Exception('File not supported')
 
         instruction = type('movie', (), {})()
@@ -103,14 +103,14 @@ class rpcInterface(object):
                 search = tmdb.Search()
                 search.movie(query=result["name"])
                 for s in search.results:
-		   if 'release_date' in s:
-		        if int(s['release_date'][0:4]) == int(result["year"]):
-			   return result
+                    if 'release_date' in s:
+                        if int(s['release_date'][0:4]) == int(result["year"]):
+                            return result
 
                 return []
             except:
-		print traceback.format_exc()
-		return []
+                print traceback.format_exc()
+                return []
 
         return []
 
@@ -119,10 +119,7 @@ class rpcInterface(object):
 
         for ext in config.HANDBRAKE_SUPPORTED_FILES:
             if file_extension.lower() == ext:
-               print os.path.getsize(file)
-               print config.HANDBRAKE_MIN_SIZE               
-
-	       if os.path.getsize(file) >= config.HANDBRAKE_MIN_SIZE:
-		   return True
+                if os.path.getsize(file) >= config.HANDBRAKE_MIN_SIZE:
+                    return True
 
         return False
