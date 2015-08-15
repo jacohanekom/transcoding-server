@@ -30,6 +30,9 @@ class metadataThread(threading.Thread):
 
         return to_be_processed
 
+    def clean_string(self, val):
+        return str(val).encode('ascii', 'xmlcharrefreplace')
+
     def getMoviesMetaData(self, movie, year, hddvd, image):
         tags = {}
         results = {}
@@ -42,12 +45,12 @@ class metadataThread(threading.Thread):
                     break
 
         if response:
-            results['--title'] = response.info()['title']
-            results['--comment'] = 'Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.'
-            results['--genre'] = response.info()['genres'][0]['name']
-            results['--year'] = '{time}T10:00:00Z'.format(time=response.info()['release_date'])
-            results['--description'] = response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..')
-            results['--longdesc'] = response.info()['overview']
+            results['--title'] = self.clean_string(response.info()['title'])
+            results['--comment'] = self.clean_string('Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.')
+            results['--genre'] = self.clean_string(response.info()['genres'][0]['name'])
+            results['--year'] = self.clean_string('{time}T10:00:00Z'.format(time=response.info()['release_date']))
+            results['--description'] = self.clean_string(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
+            results['--longdesc'] = self.clean_string(response.info()['overview'])
             results['--hdvideo'] = hddvd
             results['--stik'] = 'Short Film'
             results['--advisory'] = 'Inoffensive'
@@ -60,21 +63,21 @@ class metadataThread(threading.Thread):
             screenwriters = []
             production_companies = ''
             for credit in response.credits()['cast']:
-                actors.append(credit['name'])
+                actors.append(self.clean_string(credit['name']))
 
             for crew in response.credits()['crew']:
                 if crew['department'] == 'Directing':
-                    directors.append(crew['name'])
+                    directors.append(self.clean_string(crew['name']))
                 elif crew['department'] == 'Writing':
-                    screenwriters.append(crew['name'])
+                    screenwriters.append(self.clean_string(crew['name']))
                 elif crew['department'] == 'Production':
-                    producers.append(crew['name'])
+                    producers.append(self.clean_string(crew['name']))
 
             for company in response.info()['production_companies']:
-                production_companies += ', ' + company['name']
+                production_companies += ', ' + self.clean_string(company['name'])
 
             results['--artist'] = directors[0]
-            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=response.releases()['countries'][0]['certification'])
+            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.clean_string(response.releases()['countries'][0]['certification']))
             all_data = []
             all_data.append(self.getDictionaryPlist('cast', actors))
             all_data.append(self.getDictionaryPlist('directors', directors))
@@ -92,22 +95,22 @@ class metadataThread(threading.Thread):
         t = tvdb_api.Tvdb(actors=True)
         showName = t[showName]['seriesname']
 
-        results['--title'] = t[showName][season][episode]['episodename']
-        results['--artist'] = showName
-        results['--album'] = '{showName}, season {season}'.format(showName=showName, season=season)
-        results['--comment'] = 'Information courtesy of The TVDB (http://www.thetvdb.com). Used with permission.'
-        results['--genre'] = t[showName]['genre'][1:].split('|')[0]
-        results['--year'] = '{time}T10:00:00Z'.format(time=t[showName][season][episode]['firstaired'])
-        results['--tracknum'] = '{ep}/{total}'.format(ep=episode, total=len(t[showName][season]))
-        results['--disk'] = '{season}/{total}'.format(season=season, total=len(t[showName]))
-        results['--TVShowName'] = showName
-        results['--TVNetwork'] = t[showName]['network']
-        results['--TVEpisode'] = 'S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2))
-        results['--TVSeasonNum'] = season
-        results['--TVEpisodeNum'] = episode
-        results['--description'] = t[showName][season][episode]['overview'][:255] + (t[showName][season][episode]['overview'][255:] and '..')
-        results['--longdesc'] = t[showName][season][episode]['overview']
-        results['--storedesc'] = t[showName]['overview']
+        results['--title'] = self.clean_string(t[showName][season][episode]['episodename'])
+        results['--artist'] = self.clean_string(showName)
+        results['--album'] = self.clean_string('{showName}, season {season}'.format(showName=showName, season=season))
+        results['--comment'] = self.clean_string('Information courtesy of The TVDB (http://www.thetvdb.com). Used with permission.')
+        results['--genre'] = self.clean_string(t[showName]['genre'][1:].split('|')[0])
+        results['--year'] = self.clean_string('{time}T10:00:00Z'.format(time=t[showName][season][episode]['firstaired']))
+        results['--tracknum'] = self.clean_string('{ep}/{total}'.format(ep=episode, total=len(t[showName][season])))
+        results['--disk'] = self.clean_string('{season}/{total}'.format(season=season, total=len(t[showName])))
+        results['--TVShowName'] = self.clean_string(showName)
+        results['--TVNetwork'] = self.clean_string(t[showName]['network'])
+        results['--TVEpisode'] = self.clean_string('S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2)))
+        results['--TVSeasonNum'] = self.clean_string(season)
+        results['--TVEpisodeNum'] = self.clean_string(episode)
+        results['--description'] = self.clean_string(t[showName][season][episode]['overview'][:255] + (t[showName][season][episode]['overview'][255:] and '..'))
+        results['--longdesc'] = self.clean_string(t[showName][season][episode]['overview'])
+        results['--storedesc'] = self.clean_string(t[showName]['overview'])
         results['--hdvideo'] = hddvd
         results['--stik'] = 'TV Show'
         results['--advisory'] = 'Inoffensive'
@@ -146,12 +149,15 @@ class metadataThread(threading.Thread):
             return ""
     
     def getSplitList(self, value):
-        result = []
-        if value.startswith('|'):
-            result = value[1:-1].split('|')
+        if value is not None:
+            result = []
+            if value.startswith('|'):
+                result = self.clean_string(value[1:-1].split('|'))
+            else:
+                result.append(self.clean_string(value))
+            return result
         else:
-            result.append(value)
-        return result
+            return ""
 
     def getDictionaryPlist(self, name, list):
         try:
@@ -160,7 +166,7 @@ class metadataThread(threading.Thread):
             for value in list:
                 output += '<dict>'
                 output += '<key>{name}</key>'.format(name='name')
-                output += '<string>{name}</string>'.format(name=value.encode('utf-8'))
+                output += '<string>{name}</string>'.format(name=value)
             output += '</dict>'
             output += '</array>'
             return output
@@ -291,7 +297,7 @@ class metadataThread(threading.Thread):
                     file.status.state = 'Publish - Queued'
                     self.updateStorage(uuid, file)
                 except:
-                    file.status.state = 'Metadata - Error - {error}'.format(error = sys.exc_info()[0])
+                    file.status.state = 'Metadata - Error - {error}'.format(error = traceback.format_exc())
                     self.updateStorage(uuid, file)
 
             time.sleep(60)
