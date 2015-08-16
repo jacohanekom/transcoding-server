@@ -223,6 +223,11 @@ class metadataThread(threading.Thread):
                 print 'No images found on thetvdb'
         if source is not None:
             try:
+                image_path = os.path.join(tempfile.gettempdir(), source.split('/')[(len(source.split('/')) - 1)])
+
+                if os.path.isfile(image_path):
+                    os.remove(image_path)
+
                 destination = os.path.join(tempfile.gettempdir(), source.split('/')[(len(source.split('/')) - 1)])
                 urllib.urlretrieve(source, destination)
             except:
