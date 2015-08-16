@@ -297,6 +297,8 @@ class metadataThread(threading.Thread):
         tmdb.API_KEY = config.METADATA_MOVIE_KEY
 
     def run(self):
+        retries = 5
+
         print 'Starting ' + self.name
         while True:
             for uuid in self.getAvailableFiles():
@@ -307,13 +309,39 @@ class metadataThread(threading.Thread):
 
                     output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     if file.metadata.type == 'tv':
-                        tags = self.getTVShowMetaData(file.metadata.show, file.metadata.season, file.metadata.episode, self.get_hd_tag(output), self.getTVCoverArt(file.metadata.show, file.metadata.season, file.metadata.episode))
+                        counter = 0
+
+                        while True:
+                            art = self.getTVCoverArt(file.metadata.show, file.metadata.season, file.metadata.episode)
+
+                            if art is not None:
+                                break
+                            else:
+                                if counter < retries:
+                                    break
+                                else:
+                                    counter += 1
+                                    time.sleep(1)
+
+                        tags = self.getTVShowMetaData(file.metadata.show, file.metadata.season, file.metadata.episode, self.get_hd_tag(output), art)
                         if '--artist' in tags['standard']:
                             file.metadata.show = tags['standard']['--artist'].replace(':', '-')
                     elif file.metadata.type == 'movie':
-                        file.metadata.name = self.getMovieName(file.metadata.name, file.metadata.year)
+                        counter = 0
 
-                        tags = self.getMoviesMetaData(file.metadata.name, file.metadata.year, self.get_hd_tag(output), self.getMovieCoverArt(file.metadata.name, file.metadata.year))
+                        while True:
+                            art = self.getMovieCoverArt(file.metadata.name, file.metadata.year)
+
+                            if art is not None:
+                                break
+                            else:
+                                if counter < retries:
+                                    break
+                                else:
+                                    counter += 1
+                                    time.sleep(1)
+
+                        tags = self.getMoviesMetaData(file.metadata.name, file.metadata.year, self.get_hd_tag(output), art)
                         if '--title' in tags['standard']:
                             file.metadata.name = tags['standard']['--title'].replace(':', '-')
 

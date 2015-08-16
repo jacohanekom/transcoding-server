@@ -57,8 +57,7 @@ class handbrakeThread(threading.Thread):
                             file.status.state = 'Transcoding - Error'
                             self.updateStorage(uuid, file)
                             break
-
                 except:
                     file.status.state = 'Transcoding - Error - {error}'.format(error=sys.exc_info()[0])
                     self.updateStorage(uuid, file)
-                    time.sleep(60)
+            time.sleep(60)
