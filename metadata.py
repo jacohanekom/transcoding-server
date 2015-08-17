@@ -77,7 +77,8 @@ class metadataThread(threading.Thread):
                 results['--description'] = self.clean_string(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
                 results['--longdesc'] = self.clean_string(response.info()['overview'])
             except:
-
+                results['--description'] = ""
+                results['--longdesc'] = ""
 
             results['--hdvideo'] = hddvd
             results['--stik'] = 'Short Film'
