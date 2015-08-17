@@ -72,8 +72,13 @@ class metadataThread(threading.Thread):
             results['--comment'] = self.clean_string('Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.')
             results['--genre'] = self.clean_string(response.info()['genres'][0]['name'])
             results['--year'] = self.clean_string('{time}T10:00:00Z'.format(time=response.info()['release_date']))
-            results['--description'] = self.clean_string(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
-            results['--longdesc'] = self.clean_string(response.info()['overview'])
+
+            try:
+                results['--description'] = self.clean_string(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
+                results['--longdesc'] = self.clean_string(response.info()['overview'])
+            except:
+                
+
             results['--hdvideo'] = hddvd
             results['--stik'] = 'Short Film'
             results['--advisory'] = 'Inoffensive'
@@ -131,8 +136,14 @@ class metadataThread(threading.Thread):
         results['--TVEpisode'] = self.clean_string('S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2)))
         results['--TVSeasonNum'] = self.clean_string(season)
         results['--TVEpisodeNum'] = self.clean_string(episode)
-        results['--description'] = self.clean_string(t[showName][season][episode]['overview'][:255] + (t[showName][season][episode]['overview'][255:] and '..'))
-        results['--longdesc'] = self.clean_string(t[showName][season][episode]['overview'])
+
+        try:
+            results['--description'] = self.clean_string(t[showName][season][episode]['overview'][:255] + (t[showName][season][episode]['overview'][255:] and '..'))
+            results['--longdesc'] = self.clean_string(t[showName][season][episode]['overview'])
+        except:
+            results['--description'] = ""
+            results['--longdesc'] = ""
+
         results['--storedesc'] = self.clean_string(t[showName]['overview'])
         results['--hdvideo'] = hddvd
         results['--stik'] = 'TV Show'
