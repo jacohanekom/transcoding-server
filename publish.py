@@ -16,13 +16,13 @@ class publishThread(threading.Thread):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = title,
+             episode = str(show.metadata.episode).zfill(2), showname = title.replace("/",""),
              ext = config.HANDBRAKE_EXTENSION
            )
         else:
            output = "{show} - S{season}E{episode}-E{episode1} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = title,
+             episode = str(show.metadata.episode).zfill(2), showname = title.replace("/",""),
              episode1 = str(show.metadata.episode+1).zfill(2),
              ext = config.HANDBRAKE_EXTENSION
            )
