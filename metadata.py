@@ -271,7 +271,6 @@ class metadataThread(threading.Thread):
             print True
         else:
             return False
-
     def getMovieCoverArt(self, movieName, year):
         search = tmdb.Search()
         source = None

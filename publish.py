@@ -98,7 +98,6 @@ class publishThread(threading.Thread):
                             raise Exception('File Already exist')
                         else:
                             shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
-
                         os.remove(converted_file)
                         os.remove(file.file)
 
