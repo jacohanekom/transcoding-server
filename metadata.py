@@ -100,7 +100,7 @@ class metadataThread(threading.Thread):
 
         if year:
             try:
-                show = tvdb_interface[show_name + '(' + year + ')']
+                show = tvdb_interface[show_name + ' (' + str(year) + ')']
             except tvdb_exceptions.tvdb_shownotfound:
                 show = tvdb_interface[show_name]
         else:
