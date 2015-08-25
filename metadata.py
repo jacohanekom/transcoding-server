@@ -5,7 +5,7 @@ import os
 import tempfile
 import config
 import pytumblr
-import tvdb_api
+import tvdb_api, tvdb_exceptions
 import urllib
 import subprocess
 import tmdbsimple as tmdb
@@ -99,7 +99,10 @@ class metadataThread(threading.Thread):
         tvdb_interface = tvdb_api.Tvdb(actors=True)
 
         if year:
-            show = tvdb_interface[show_name + '(' + year + ')']
+            try:
+                show = tvdb_interface[show_name + '(' + year + ')']
+            except tvdb_exceptions.tvdb_shownotfound:
+                show = tvdb_interface[show_name]
         else:
             show = tvdb_interface[show_name]
 
