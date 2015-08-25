@@ -33,7 +33,7 @@ class rpcInterface(object):
         self.registered_files[id] = instruction
         return id
 
-    def add_tv_show_queue(self, file, show, season, episode, double_episode):
+    def add_tv_show_queue(self, file, show, season, episode, double_episode, year=None):
         for already_present in self.registered_files:
             if self.registered_files[already_present].file == file:
                 raise Exception('File Already present')
@@ -49,6 +49,10 @@ class rpcInterface(object):
         setattr(metadata, 'season', season)
         setattr(metadata, 'episode', episode)
         setattr(metadata, 'double_episode', double_episode)
+
+        if year:
+            setattr(metadata, 'year', year)
+
         setattr(metadata, 'type', 'tv')
 
         status = type('status', (), {})()
@@ -80,7 +84,10 @@ class rpcInterface(object):
                 result["show"] = guess["series"]
                 result["season"] = guess["season"]
 
-                if result.has_key("episodeList"):
+                if guess.has_key("year"):
+                    result["year"] = guess["year"]
+
+                if guess.has_key("episodeList"):
                     result["double_episode"] = 1
                     result["episode"] = guess["episodeList"][0]
                 else:
