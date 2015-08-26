@@ -15,9 +15,7 @@ from hachoir_core.cmd_line import unicodeFilename
 from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 
-class metadataThread(threading.Thread):
-
-
+class MetadataThread(threading.Thread):
     def updateStorage(self, uuid, obj):
         self.registered_files[uuid] = obj
 
@@ -256,8 +254,7 @@ class metadataThread(threading.Thread):
         return result
 
     def __init__(self, registered_files):
-        threading.Thread.__init__(self)
-        self.registered_files = registered_files
+        super(MetadataThread, self).__init__(registered_files)
         tmdb.API_KEY = config.METADATA_MOVIE_KEY
 
     def process_file(self, uuid, file):
