@@ -4,7 +4,7 @@ import tmdbsimple as tmdb
 import tvdb_api
 import traceback
 
-class rpcInterface(object):
+class rpcInterface():
     def __init__(self, registered_files):
         self.registered_files = registered_files
 

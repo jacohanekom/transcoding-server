@@ -21,15 +21,16 @@ config_dict = dict()
 for property, value  in vars(config).iteritems():
     config_dict[property] = value
 
-# Create server
-server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler)
-server.register_introspection_functions()
-server.register_instance(rpcInterface(storage))
-
 #starting all the worker threads
 SchedulerThread(storage, config_dict).start()
 HandbrakeThread(storage, config_dict).start()
 MetadataThread(storage, config_dict).start()
 PublishThread(storage, config_dict).start()
+
+# Create server
+server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler)
+server.register_introspection_functions()
+server.register_instance(rpcInterface(storage))
+server.serve_forever()
 
 print "Server is ready"

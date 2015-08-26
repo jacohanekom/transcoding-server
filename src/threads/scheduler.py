@@ -21,7 +21,7 @@ class SchedulerThread(utils.Thread):
 
             while True:
                 for uuid in super(SchedulerThread, self).registered_files:
-                    item = super(SchedulerThread, self).registered_files[uuid]
+                    item = super(SchedulerThread, self).get_storage(uuid)
 
                     if hasattr(item, "status"):
                         details = item.status.state.split("-")
@@ -30,7 +30,7 @@ class SchedulerThread(utils.Thread):
                             class_indicator = self.get_class_identifier(details[0])
 
                             if class_indicator == -1 or class_indicator + 2 > len(self.modes):
-                                del super(SchedulerThread, self).registered_files[uuid]
+                                #del super(SchedulerThread, self).registered_files[uuid]
                                 item = None
                             else:
                                 item.status.state = self.modes[class_indicator+1] + "-" + \
@@ -46,6 +46,6 @@ class SchedulerThread(utils.Thread):
                         setattr(item, 'status', status)
 
                     if item:
-                        super(SchedulerThread, self).registered_files[uuid] = item
+                        super(SchedulerThread, self).update_storage(uuid,item)
 
                 time.sleep(60)
