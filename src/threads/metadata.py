@@ -14,8 +14,9 @@ import traceback
 from hachoir_core.cmd_line import unicodeFilename
 from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
+import utils
 
-class MetadataThread(threading.Thread):
+class MetadataThread(utils.Thread):
     def updateStorage(self, uuid, obj):
         self.registered_files[uuid] = obj
 

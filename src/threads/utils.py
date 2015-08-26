@@ -1,6 +1,7 @@
 __author__ = 'Jaco-Hanekom'
 import threading
 
+
 class Thread(threading.Thread):
     messages = ["Queued", "Processing", "Done", "Error"]
 
