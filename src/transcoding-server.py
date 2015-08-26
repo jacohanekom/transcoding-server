@@ -27,9 +27,9 @@ server.register_introspection_functions()
 server.register_instance(rpcInterface(storage))
 
 #starting all the worker threads
-SchedulerThread(storage, config).start()
-HandbrakeThread(storage, config).start()
-MetadataThread(storage, config).start()
-PublishThread(storage, config).start()
+SchedulerThread(storage, config_dict).start()
+HandbrakeThread(storage, config_dict).start()
+MetadataThread(storage, config_dict).start()
+PublishThread(storage, config_dict).start()
 
 print "Server is ready"

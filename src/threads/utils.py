@@ -4,6 +4,7 @@ import threading
 
 class Thread(threading.Thread):
     messages = ["Queued", "Processing", "Done", "Error"]
+    registered_files = dict()
 
     def get_name(self):
         return "{name}".format(name=self.__class__.__name__)

@@ -239,8 +239,8 @@ class MetadataThread(utils.Thread):
 
         return result
 
-    def __init__(self, registered_files):
-        super(MetadataThread, self).__init__(registered_files)
+    def __init__(self, registered_files, config):
+        super(MetadataThread, self).__init__(registered_files, config)
         tmdb.API_KEY = super(MetadataThread, self).get_config()['METADATA_MOVIE_KEY']
 
     def process_file(self, uuid, file):
