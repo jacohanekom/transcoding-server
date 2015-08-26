@@ -276,15 +276,15 @@ class MetadataThread(utils.Thread):
 
         print 'Starting ' + super(MetadataThread, self).get_name()
         while True:
-            for uuid in super(MetadataThread, self).getAvailableFiles():
-                file = super(MetadataThread, self).getStorage(uuid)
+            for uuid in super(MetadataThread, self).get_available_files():
+                file = super(MetadataThread, self).get_storage(uuid)
                 try:
                     file.status.state = super(MetadataThread, self).state_text(1)
-                    super(MetadataThread, self).updateStorage(uuid, file)
+                    super(MetadataThread, self).update_storage(uuid, file)
 
-                    super(MetadataThread, self).updateStorage(uuid, self.process_file(uuid, file))
+                    super(MetadataThread, self).update_storage(uuid, self.process_file(uuid, file))
                 except:
                     file.status.state = super(MetadataThread, self).state_text(3,traceback.format_exc())
-                    super(MetadataThread, self).updateStorage(uuid, file)
+                    super(MetadataThread, self).update_storage(uuid, file)
 
             time.sleep(60)

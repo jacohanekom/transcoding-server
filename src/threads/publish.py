@@ -42,8 +42,8 @@ class PublishThread(utils.Thread):
     def run(self):
         print 'Starting ' + super(PublishThread, self).get_name()
         while True:
-            for uuid in super(PublishThread, self).getAvailableFiles():
-                file = super(PublishThread, self).getStorage(uuid)
+            for uuid in super(PublishThread, self).get_available_files():
+                file = super(PublishThread, self).get_storage(uuid)
                 try:
                     converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     file.status.state = self.state_text(1)
@@ -77,9 +77,9 @@ class PublishThread(utils.Thread):
                         os.remove(file.file)
 
                     file.status.state = super(PublishThread, self).state_text(2)
-                    super(PublishThread, self).updateStorage(uuid, file)
+                    super(PublishThread, self).update_storage(uuid, file)
                 except:
                     file.status.state = super(PublishThread, self).state_text(3, error=sys.exc_info()[0])
-                    super(PublishThread, self).updateStorage(uuid, file)
+                    super(PublishThread, self).update_storage(uuid, file)
 
             time.sleep(60)
