@@ -12,14 +12,14 @@ class HandbrakeThread(utils.Thread):
     def run(self):
         while True:
             for uuid in self.getAvailableFiles():
-                file = self.getStorage(uuid)
+                file = super.getStorage(uuid)
 
                 try:
                     success = False
                     start = time.time()
 
-                    file.status.state = self.get_status(1)
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.get_status(1)
+                    super.updateStorage(uuid, file)
 
                     output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     cmd = [config.HANDBRAKE_CLI_PATH, '-i', file.file, '-o', output, '--preset={profile}'.
@@ -32,7 +32,7 @@ class HandbrakeThread(utils.Thread):
                             file.status.percent = content.split(',', 2)[1].split('%')[0].strip()
                             file.status.fps = content.split(',')[1].split('(')[1].replace('fps', '').strip()
                             file.status.time = time.time() - start
-                            self.updateStorage(uuid, file)
+                            super.updateStorage(uuid, file)
 
                         if 'Encode done' in content:
                             file.status.state = self.get_status(2)
@@ -42,9 +42,9 @@ class HandbrakeThread(utils.Thread):
 
                         if 'HandBrake has exited.' in content:
                             file.status.state = self.get_status(3)
-                            self.updateStorage(uuid, file)
+                            super.updateStorage(uuid, file)
                             break
                 except:
-                    file.status.state = self.get_status(3,sys.exc_info()[0])
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.get_status(3,sys.exc_info()[0])
+                    super.updateStorage(uuid, file)
             time.sleep(60)
