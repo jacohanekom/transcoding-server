@@ -6,7 +6,7 @@ class Thread(threading.Thread):
     messages = ["Queued", "Processing", "Done", "Error"]
 
     def get_name(self):
-        return str(type(self).name)
+        return "{name}".format(name=self.__class__.__name__)
 
     def state_text(self, state, detail=None):
         if detail:

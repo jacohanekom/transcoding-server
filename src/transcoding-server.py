@@ -25,6 +25,6 @@ server.register_instance(rpcInterface(storage))
 #starting all the worker threads
 HandbrakeThread(storage).start()
 MetadataThread(storage).start()
-PublishThread(storage).start().start()
+PublishThread(storage).start()
 
 # Run the server's main loop
