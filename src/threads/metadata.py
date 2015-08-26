@@ -1,4 +1,3 @@
-import threading
 import time, sys
 import math
 import os
@@ -17,20 +16,6 @@ from hachoir_parser import createParser
 import utils
 
 class MetadataThread(utils.Thread):
-    def updateStorage(self, uuid, obj):
-        self.registered_files[uuid] = obj
-
-    def getStorage(self, uuid):
-        return self.registered_files[uuid]
-
-    def getAvailableFiles(self):
-        to_be_processed = list()
-        for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == 'Metadata - Queued':
-                to_be_processed.append(uuid)
-
-        return to_be_processed
-
     def __clean_string__(self, val):
         try:
             cleaned = ''.join([i if ord(i) < 128 else ' ' for i in val])
@@ -284,22 +269,22 @@ class MetadataThread(utils.Thread):
             tags['--hdvideo'] = self.get_hd_tag(output)
             self.tagFile(output, tags)
 
-        file.status.state = super.state_text(2)
+        file.status.state = super(MetadataThread, self).state_text(2)
         return file
 
     def run(self):
 
-        print 'Starting ' + super.get_name()
+        print 'Starting ' + super(MetadataThread, self).get_name()
         while True:
-            for uuid in super.getAvailableFiles():
-                file = super.getStorage(uuid)
+            for uuid in super(MetadataThread, self).getAvailableFiles():
+                file = super(MetadataThread, self).getStorage(uuid)
                 try:
-                    file.status.state = super.state_text(1)
-                    super.updateStorage(uuid, file)
+                    file.status.state = super(MetadataThread, self).state_text(1)
+                    super(MetadataThread, self).updateStorage(uuid, file)
 
-                    super.updateStorage(uuid, self.process_file(uuid, file))
+                    super(MetadataThread, self).updateStorage(uuid, self.process_file(uuid, file))
                 except:
-                    file.status.state = super.state_text(3,traceback.format_exc())
-                    super.updateStorage(uuid, file)
+                    file.status.state = super(MetadataThread, self).state_text(3,traceback.format_exc())
+                    super(MetadataThread, self).updateStorage(uuid, file)
 
             time.sleep(60)

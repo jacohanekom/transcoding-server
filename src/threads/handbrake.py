@@ -8,18 +8,18 @@ import utils
 
 class HandbrakeThread(utils.Thread):
     def run(self):
-        print "Starting " + super.get_name()
+        print "Starting " + super(HandbrakeThread, self).get_name()
 
         while True:
-            for uuid in super.getAvailableFiles():
-                file = super.getStorage(uuid)
+            for uuid in super(HandbrakeThread, self).getAvailableFiles():
+                file = super(HandbrakeThread, self).getStorage(uuid)
 
                 try:
                     success = False
                     start = time.time()
 
-                    file.status.state = super.get_status(1)
-                    super.updateStorage(uuid, file)
+                    file.status.state = super(HandbrakeThread, self).get_status(1)
+                    super(HandbrakeThread, self).updateStorage(uuid, file)
 
                     output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     cmd = [config.HANDBRAKE_CLI_PATH, '-i', file.file, '-o', output, '--preset={profile}'.
@@ -32,19 +32,19 @@ class HandbrakeThread(utils.Thread):
                             file.status.percent = content.split(',', 2)[1].split('%')[0].strip()
                             file.status.fps = content.split(',')[1].split('(')[1].replace('fps', '').strip()
                             file.status.time = time.time() - start
-                            super.updateStorage(uuid, file)
+                            super(HandbrakeThread, self).updateStorage(uuid, file)
 
                         if 'Encode done' in content:
-                            file.status.state = super.get_status(2)
+                            file.status.state = super(HandbrakeThread, self).get_status(2)
                             file.status.percent = '100'
-                            super.updateStorage(uuid, file)
+                            super(HandbrakeThread, self).updateStorage(uuid, file)
                             break
 
                         if 'HandBrake has exited.' in content:
-                            file.status.state = super.get_status(3)
-                            super.updateStorage(uuid, file)
+                            file.status.state = super(HandbrakeThread, self).get_status(3)
+                            super(HandbrakeThread, self).updateStorage(uuid, file)
                             break
                 except:
-                    file.status.state = super.get_status(3,sys.exc_info()[0])
-                    super.updateStorage(uuid, file)
+                    file.status.state = super(HandbrakeThread, self).get_status(3,sys.exc_info()[0])
+                    super(HandbrakeThread, self).updateStorage(uuid, file)
             time.sleep(60)
