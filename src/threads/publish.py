@@ -40,14 +40,14 @@ class PublishThread(utils.Thread):
         return tempfile.gettempdir()
 
     def run(self):
-        print 'Starting ' + self.get_name
+        print 'Starting ' + super.get_name()
         while True:
-            for uuid in self.getAvailableFiles():
-                file = self.getStorage(uuid)
+            for uuid in super.getAvailableFiles():
+                file = super.getStorage(uuid)
                 try:
                     converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     file.status.state = self.state_text(1)
-                    self.updateStorage(uuid, file)
+                    super.updateStorage(uuid, file)
 
                     if file.metadata.type == 'tv':
                         destination = self.get_series_destination(file)
@@ -76,10 +76,10 @@ class PublishThread(utils.Thread):
                         os.remove(converted_file)
                         os.remove(file.file)
 
-                    file.status.state = self.state_text(2)
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.state_text(2)
+                    super.updateStorage(uuid, file)
                 except:
-                    file.status.state = self.state_text(3, error=sys.exc_info()[0])
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.state_text(3, error=sys.exc_info()[0])
+                    super.updateStorage(uuid, file)
 
             time.sleep(60)

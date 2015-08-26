@@ -283,22 +283,22 @@ class MetadataThread(threading.Thread):
             tags['--hdvideo'] = self.get_hd_tag(output)
             self.tagFile(output, tags)
 
-        file.status.state = self.state_text(2)
+        file.status.state = super.state_text(2)
         return file
 
     def run(self):
 
-        print 'Starting ' + self.name
+        print 'Starting ' + super.get_name()
         while True:
-            for uuid in self.getAvailableFiles():
-                file = self.getStorage(uuid)
+            for uuid in super.getAvailableFiles():
+                file = super.getStorage(uuid)
                 try:
-                    file.status.state = self.state_text(1)
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.state_text(1)
+                    super.updateStorage(uuid, file)
 
-                    self.updateStorage(uuid, self.process_file(uuid, file))
+                    super.updateStorage(uuid, self.process_file(uuid, file))
                 except:
-                    file.status.state = self.state_text(3,traceback.format_exc())
-                    self.updateStorage(uuid, file)
+                    file.status.state = super.state_text(3,traceback.format_exc())
+                    super.updateStorage(uuid, file)
 
             time.sleep(60)

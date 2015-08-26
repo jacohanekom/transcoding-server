@@ -7,11 +7,11 @@ import config
 import utils
 
 class HandbrakeThread(utils.Thread):
-    level = 0
-
     def run(self):
+        print "Starting " + super.get_name()
+
         while True:
-            for uuid in self.getAvailableFiles():
+            for uuid in super.getAvailableFiles():
                 file = super.getStorage(uuid)
 
                 try:
@@ -35,15 +35,14 @@ class HandbrakeThread(utils.Thread):
                             super.updateStorage(uuid, file)
 
                         if 'Encode done' in content:
-                            file.status.state = self.get_status(2)
+                            file.status.state = super.get_status(2)
                             file.status.percent = '100'
-                            self.updateStorage(uuid, file)
+                            super.updateStorage(uuid, file)
                             break
 
                         if 'HandBrake has exited.' in content:
-                            file.status.state = self.get_status(3)
+                            file.status.state = super.get_status(3)
                             super.updateStorage(uuid, file)
-                            None
                             break
                 except:
                     file.status.state = super.get_status(3,sys.exc_info()[0])
