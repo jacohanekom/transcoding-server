@@ -81,7 +81,7 @@ class metadataThread(threading.Thread):
                 production_companies += ', ' + self.clean_string(company['name'])
 
             results['--artist'] = directors[0]
-            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.clean_string(response.releases()['countries'][0]['certification']))
+            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.__clean_string__(response.releases()['countries'][0]['certification']))
             all_data = []
             all_data.append(self.__get_dictionary_plist__('cast', actors))
             all_data.append(self.__get_dictionary_plist__('directors', directors))
@@ -170,9 +170,9 @@ class metadataThread(threading.Thread):
         if value is not None:
             result = []
             if value.startswith('|'):
-                result = self.clean_string(value[1:-1].split('|'))
+                result = self.__clean_string__(value[1:-1].split('|'))
             else:
-                result.append(self.clean_string(value))
+                result.append(self.__clean_string__(value))
             return result
         else:
             return ""
