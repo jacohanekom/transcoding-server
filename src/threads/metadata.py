@@ -16,6 +16,8 @@ from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 
 class metadataThread(threading.Thread):
+    level = 1
+
     def updateStorage(self, uuid, obj):
         self.registered_files[uuid] = obj
 
@@ -33,7 +35,12 @@ class metadataThread(threading.Thread):
     def __clean_string__(self, val):
         try:
             cleaned = ''.join([i if ord(i) < 128 else ' ' for i in val])
-            return str(cleaned).encode('ascii', 'xmlcharrefreplace')
+            str = str(cleaned).encode('ascii', 'xmlcharrefreplace')
+
+            str = str.replace("<", "&lt;")
+            str = str.replace(">", "&gt;")
+            str = str.replace("\"", "&quot;")
+            return str
         except:
             return ""
 
@@ -266,6 +273,7 @@ class metadataThread(threading.Thread):
 
             if '--artist' in tags:
                 file.metadata.name = tags['--artist'].replace(":", " ").replace("/", " ")
+                setattr(file.metadata, "title", tags['--title'].replace(":", " ").replace("/", " "))
 
         elif file.metadata.type == 'movie':
             tags = self.get_movie_metadata(file.metadata.name, file.metadata.year)

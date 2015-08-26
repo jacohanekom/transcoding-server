@@ -4,25 +4,10 @@ import os
 import subprocess
 import tempfile
 import config
+import utils
 
-class handbrakeThread(threading.Thread):
-    def updateStorage(self, uuid, obj):
-        self.registered_files[uuid] = obj
-
-    def getStorage(self, uuid):
-        return self.registered_files[uuid]
-
-    def getAvailableFiles(self):
-        to_be_processed = list()
-        for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == 'Transcoding - Queued':
-                to_be_processed.append(uuid)
-
-        return to_be_processed
-
-    def __init__(self, registered_files):
-        threading.Thread.__init__(self)
-        self.registered_files = registered_files
+class HandbrakeThread(utils.Thread):
+    level = 0
 
     def run(self):
         while True:
