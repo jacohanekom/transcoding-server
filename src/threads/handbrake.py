@@ -43,6 +43,7 @@ class HandbrakeThread(utils.Thread):
                         if 'HandBrake has exited.' in content:
                             file.status.state = self.get_status(3)
                             super.updateStorage(uuid, file)
+                            None
                             break
                 except:
                     file.status.state = super.get_status(3,sys.exc_info()[0])
