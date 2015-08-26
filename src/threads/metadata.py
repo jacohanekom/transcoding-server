@@ -1,8 +1,6 @@
-import time, sys
-import math
+import time
 import os
 import tempfile
-import config
 import pytumblr
 import tvdb_api, tvdb_exceptions
 import urllib
@@ -182,8 +180,8 @@ class MetadataThread(utils.Thread):
     def get_tumbler_cover_art(self, season_id):
         t = tvdb_api.Tvdb(banners=True)
 
-        client = pytumblr.TumblrRestClient(config.METADATA_TUMBLR_KEY)
-        results = client.posts('squaredtvart.tumblr.com', tag='thetvdb season {seasonid}'.format(seasonid=t[showName][season][episode]['seasonid']))
+        client = pytumblr.TumblrRestClient(super(MetadataThread, self).get_config()['METADATA_TUMBLR_KEY'])
+        results = client.posts('squaredtvart.tumblr.com', tag='thetvdb season {seasonid}'.format(seasonid=season_id))
         if results['total_posts'] > 0:
             source = results['posts'][0]['photos'][0]['original_size']['url']
             destination = os.path.join(tempfile.gettempdir(), source.split('/')[(len(source.split('/')) - 1)])
@@ -212,7 +210,9 @@ class MetadataThread(utils.Thread):
             cmd_to_execute.append(str(key))
             cmd_to_execute.append(str(value))
 
-        cmd = [config.METADATA_ATOMIC_PARSLEY, file] + cmd_to_execute + ['--rDNSatom',
+        atomic_parsley_path = super(MetadataThread, self).get_config()['METADATA_ATOMIC_PARSLEY']
+
+        cmd = [atomic_parsley_path, file] + cmd_to_execute + ['--rDNSatom',
          iTunMOVI,
          'name=iTunMOVI',
          'domain=com.apple.iTunes'] + ['--rDNSatom',
@@ -241,10 +241,10 @@ class MetadataThread(utils.Thread):
 
     def __init__(self, registered_files):
         super(MetadataThread, self).__init__(registered_files)
-        tmdb.API_KEY = config.METADATA_MOVIE_KEY
+        tmdb.API_KEY = super(MetadataThread, self).get_config()['METADATA_MOVIE_KEY']
 
     def process_file(self, uuid, file):
-        output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+        output = os.path.join(tempfile.gettempdir(), uuid + super(MetadataThread, self).get_config()['HANDBRAKE_EXTENSION'])
         if file.metadata.type == 'tv':
             tags = self.get_tv_metadata(
                 file.metadata.show,file.metadata.season,

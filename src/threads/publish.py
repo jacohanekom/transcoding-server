@@ -1,5 +1,4 @@
 import os, sys
-import config
 import time
 import shutil
 import tempfile
@@ -11,27 +10,29 @@ class PublishThread(utils.Thread):
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
              episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title.replace("/",""),
-             ext = config.HANDBRAKE_EXTENSION
+             ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )
         else:
            output = "{show} - S{season}E{episode}-E{episode1} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
              episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title.replace("/",""),
              episode1 = str(show.metadata.episode+1).zfill(2),
-             ext = config.HANDBRAKE_EXTENSION
+             ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )
 
         return [os.path.join(self.__get_drive_mount__(show.metadata.show),
-            config.PUBLISH_TVSHOWS_FOLDER, show.metadata.show, 'Season ' + str(show.metadata.season).zfill(2)), output]
+            super(PublishThread, self).get_config()['PUBLISH_TVSHOWS_FOLDER'],
+            show.metadata.show, 'Season ' + str(show.metadata.season).zfill(2)), output]
 
     def __get_movie_destination__(self, movie):
         path = "{name} ({year}){ext}".format(name=movie.metadata.name, year=movie.metadata.year,
-                                              ext=config.HANDBRAKE_EXTENSION)
+                                              ext=super(PublishThread, self).get_config()['self.HANDBRAKE_EXTENSION'])
 
-        return [os.path.join(self.__get_drive_mount__(movie.metadata.name), config.PUBLISH_MOVIES_FOLDER), path]
+        return [os.path.join(self.__get_drive_mount__(movie.metadata.name), super(PublishThread, self)
+                             .get_config()['PUBLISH_MOVIES_FOLDER']), path]
 
     def __get_drive_mount__(self, name):
-        for (key, value,) in config.PUBLISH_MOUNTS.iteritems():
+        for (key, value,) in super(PublishThread, self).get_config()['PUBLISH_MOUNTS'].iteritems():
             lowerbound = int(value.split('-')[0])
             upperbound = int(value.split('-')[1])
             if ord(name[0:1].upper()) >= lowerbound and ord(name[0:1].upper()) <= upperbound:
@@ -45,7 +46,8 @@ class PublishThread(utils.Thread):
             for uuid in super(PublishThread, self).get_available_files():
                 file = super(PublishThread, self).get_storage(uuid)
                 try:
-                    converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
+                    converted_file = os.path.join(tempfile.gettempdir(), uuid +
+                                                  super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
                     file.status.state = self.state_text(1)
                     super(PublishThread, self).updateStorage(uuid, file)
 

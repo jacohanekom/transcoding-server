@@ -1,9 +1,8 @@
-import threading, sys
+import sys
 import time
 import os
 import subprocess
 import tempfile
-import config
 import utils
 
 class HandbrakeThread(utils.Thread):
@@ -21,9 +20,9 @@ class HandbrakeThread(utils.Thread):
                     file.status.state = super(HandbrakeThread, self).get_status(1)
                     super(HandbrakeThread, self).update_storage(uuid, file)
 
-                    output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
-                    cmd = [config.HANDBRAKE_CLI_PATH, '-i', file.file, '-o', output, '--preset={profile}'.
-                        format(profile=config.HANDBRAKE_PRESET)]
+                    output = os.path.join(tempfile.gettempdir(), uuid + super(HandbrakeThread, self).get_config()['HANDBRAKE_EXTENSION'])
+                    cmd = [super(HandbrakeThread, self).get_config()['HANDBRAKE_CLI_PATH'], '-i', file.file, '-o', output, '--preset={profile}'.
+                        format(profile=super(HandbrakeThread, self).get_config()['HANDBRAKE_PRESET'])]
                     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
                     while True:
                         out = proc.stdout.readline()

@@ -22,13 +22,7 @@ class rpcInterface(object):
         setattr(metadata, 'name', name)
         setattr(metadata, 'year', year)
         setattr(metadata, 'type', 'movie')
-        status = type('status', (), {})()
-        setattr(status, 'state', '')
-        setattr(status, 'percent', '0')
-        setattr(status, 'time', '0')
-        setattr(status, 'fps', '0')
         setattr(instruction, 'metadata', metadata)
-        setattr(instruction, 'status', status)
         id = str(uuid.uuid4())
         self.registered_files[id] = instruction
         return id

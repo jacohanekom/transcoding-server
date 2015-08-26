@@ -22,15 +22,20 @@ class Thread(threading.Thread):
 
     def get_available_files(self):
         to_be_processed = list()
+
         for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == self.__class__ + ' - ' + self.messages[0]:
+            if self.registered_files[uuid].status.state == self.__class__ + '-' + self.messages[0]:
                 to_be_processed.append(uuid)
 
         return to_be_processed
 
-    def __init__(self, registered_files):
+    def get_config(self):
+        return self.config
+
+    def __init__(self, registered_files, config):
         threading.Thread.__init__(self)
         self.registered_files = registered_files
+        self.config = config
 
     def run(self):
         None
