@@ -2,7 +2,16 @@ __author__ = 'Jaco-Hanekom'
 import threading
 
 class Thread(threading.Thread):
-    queue = []
+    messages = ["Queued", "Processing", "Done", "Error"]
+
+    def get_name(self):
+        return self.__class__.name
+
+    def state_text(self, state, detail=None):
+        if detail:
+            return "{cls} - {state} - {detail}".format(cls=self.get_name(), state=self.messages[state], error = detail)
+        else:
+            return "{cls} - {state}".format(cls=self.get_name(), state=self.messages[state])
 
     def update_storage(self, uuid, obj):
         self.registered_files[uuid] = obj
@@ -13,7 +22,7 @@ class Thread(threading.Thread):
     def get_available_files(self):
         to_be_processed = list()
         for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == 'Transcoding - Queued':
+            if self.registered_files[uuid].status.state == self.__class__ + ' - ' + self.messages[0]:
                 to_be_processed.append(uuid)
 
         return to_be_processed

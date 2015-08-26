@@ -17,8 +17,10 @@ class HandbrakeThread(utils.Thread):
                 try:
                     success = False
                     start = time.time()
-                    file.status.state = 'Transcoding - Processing'
+
+                    file.status.state = self.get_status(1)
                     self.updateStorage(uuid, file)
+
                     output = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
                     cmd = [config.HANDBRAKE_CLI_PATH, '-i', file.file, '-o', output, '--preset={profile}'.
                         format(profile=config.HANDBRAKE_PRESET)]
@@ -33,16 +35,16 @@ class HandbrakeThread(utils.Thread):
                             self.updateStorage(uuid, file)
 
                         if 'Encode done' in content:
-                            file.status.state = 'Metadata - Queued'
+                            file.status.state = self.get_status(2)
                             file.status.percent = '100'
                             self.updateStorage(uuid, file)
                             break
 
                         if 'HandBrake has exited.' in content:
-                            file.status.state = 'Transcoding - Error'
+                            file.status.state = self.get_status(3)
                             self.updateStorage(uuid, file)
                             break
                 except:
-                    file.status.state = 'Transcoding - Error - {error}'.format(error=sys.exc_info()[0])
+                    file.status.state = self.get_status(3,sys.exc_info()[0])
                     self.updateStorage(uuid, file)
             time.sleep(60)

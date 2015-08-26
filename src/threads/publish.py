@@ -6,8 +6,6 @@ import tempfile
 import utils
 
 class PublishThread(utils.Thread):
-    level = 2
-
     def __get_tv_show_destination__(self, show):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
@@ -42,13 +40,13 @@ class PublishThread(utils.Thread):
         return tempfile.gettempdir()
 
     def run(self):
-        print 'Starting ' + self.name
+        print 'Starting ' + self.get_name
         while True:
             for uuid in self.getAvailableFiles():
                 file = self.getStorage(uuid)
                 try:
                     converted_file = os.path.join(tempfile.gettempdir(), uuid + config.HANDBRAKE_EXTENSION)
-                    file.status.state = 'Publish - Running'
+                    file.status.state = self.state_text(1)
                     self.updateStorage(uuid, file)
 
                     if file.metadata.type == 'tv':
@@ -64,8 +62,6 @@ class PublishThread(utils.Thread):
                         os.remove(converted_file)
                         os.remove(file.file)
 
-                        if config.SICKBEARD_ENABLED:
-                            self.trigger_sickbeard_refresh(file.metadata.show)
                     elif file.metadata.type == 'movie':
                         destination = self.get_movies_path(file)
 
@@ -80,10 +76,10 @@ class PublishThread(utils.Thread):
                         os.remove(converted_file)
                         os.remove(file.file)
 
-                    file.status.state = 'Publish - Done'
+                    file.status.state = self.state_text(2)
                     self.updateStorage(uuid, file)
                 except:
-                    file.status.state = 'Publish - Error - {error}'.format(error=sys.exc_info()[0])
+                    file.status.state = self.state_text(3, error=sys.exc_info()[0])
                     self.updateStorage(uuid, file)
 
             time.sleep(60)

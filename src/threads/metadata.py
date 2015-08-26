@@ -16,7 +16,7 @@ from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 
 class metadataThread(threading.Thread):
-    level = 1
+
 
     def updateStorage(self, uuid, obj):
         self.registered_files[uuid] = obj
@@ -286,7 +286,7 @@ class metadataThread(threading.Thread):
             tags['--hdvideo'] = self.get_hd_tag(output)
             self.tagFile(output, tags)
 
-        file.status.state = 'Publish - Queued'
+        file.status.state = self.state_text(2)
         return file
 
     def run(self):
@@ -296,12 +296,12 @@ class metadataThread(threading.Thread):
             for uuid in self.getAvailableFiles():
                 file = self.getStorage(uuid)
                 try:
-                    file.status.state = 'Metadata - Processing'
+                    file.status.state = self.state_text(1)
                     self.updateStorage(uuid, file)
 
                     self.updateStorage(uuid, self.process_file(uuid, file))
                 except:
-                    file.status.state = 'Metadata - Error - {error}'.format(error = traceback.format_exc())
+                    file.status.state = self.state_text(3,traceback.format_exc())
                     self.updateStorage(uuid, file)
 
             time.sleep(60)
