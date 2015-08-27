@@ -48,15 +48,7 @@ class rpcInterface():
             setattr(metadata, 'year', year)
 
         setattr(metadata, 'type', 'tv')
-
-        status = type('status', (), {})()
-
-        setattr(status, 'state', 'Transcoding - Queued')
-        setattr(status, 'percent', '0')
-        setattr(status, 'time', '0')
-        setattr(status, 'fps', '0')
         setattr(instruction, 'metadata', metadata)
-        setattr(instruction, 'status', status)
 
         id = str(uuid.uuid4())
         self.registered_files[id] = instruction
