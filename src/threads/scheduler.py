@@ -3,12 +3,10 @@ __author__ = 'jacohanekom'
 import utils, time
 
 class SchedulerThread(utils.Base):
-      modes = ['HandbrakeThread', 'MetadataThread','PublishThread']
-
       def get_class_identifier(self, class_name):
           counter = 0
 
-          for mode in self.modes:
+          for mode in self.local_modes:
               if class_name == mode:
                   return counter
 
@@ -18,6 +16,10 @@ class SchedulerThread(utils.Base):
 
       def run(self):
             print 'Starting ' + super(SchedulerThread, self).get_name()
+
+            self.local_modes = []
+            for mode in super(SchedulerThread, self).get_config()["MODES"]:
+                self.local_modes.append(mode.split(".")[1])
 
             while True:
                 for uuid in super(SchedulerThread, self).registered_files:
@@ -31,16 +33,16 @@ class SchedulerThread(utils.Base):
                             class_indicator = self.get_class_identifier(details[0])
                             print class_indicator
 
-                            if class_indicator == -1 or class_indicator + 2 > len(self.modes):
+                            if class_indicator == -1 or class_indicator + 2 > len(self.local_modes):
                                 del super(SchedulerThread, self).registered_files[uuid]
                                 item = None
                             else:
-                                item.status.state = self.modes[class_indicator+1] + "-" + \
+                                item.status.state = self.local_modes[class_indicator+1] + "-" + \
                                                     super(SchedulerThread, self).messages[0]
 
                     else:
                         status = type('status', (), {})()
-                        setattr(status, 'state', self.modes[0] + "-" + super(SchedulerThread, self).messages[0])
+                        setattr(status, 'state', self.local_modes[0] + "-" + super(SchedulerThread, self).messages[0])
                         setattr(status, 'percent', '0')
                         setattr(status, 'time', '0')
                         setattr(status, 'fps', '0')

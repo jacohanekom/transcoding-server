@@ -4,15 +4,14 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 import config
 from interface import rpcInterface
-from threads import HandbrakeThread, MetadataThread, PublishThread, SchedulerThread
 import thread
 
-def start_thread(storage, config_dict):
-    #module = __import__("threads")
-    #class_ = getattr(module, SchedulerThread)
+def start_thread(name, storage, config_dict):
+    module = __import__(name.split(".")[0])
+    class_ = getattr(module, name.split(".")[1])
+    instance = class_(storage, config_dict)
 
-    scheduler = SchedulerThread(storage, config_dict)
-    scheduler.run()
+    instance.run()
 
 if __name__ == '__main__':
     print "Starting RPC Server {interface} - {port}".format(
@@ -31,11 +30,10 @@ if __name__ == '__main__':
         config_dict[property] = value
 
     #starting all the worker threads
-    thread.start_new_thread(start_thread, (storage, config_dict))
+    thread.start_new_thread(start_thread, ("threads.SchedulerThread", storage, config_dict))
 
-    #HandbrakeThread(storage, config_dict).start()
-    #MetadataThread(storage, config_dict).start()
-    #PublishThread(storage, config_dict).start()
+    for cls in config.MODES:
+        thread.start_new_thread(start_thread, (cls, storage, config_dict))
 
     # Create server
     server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler)
