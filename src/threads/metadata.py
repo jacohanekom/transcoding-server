@@ -13,7 +13,7 @@ from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 import utils
 
-class MetadataThread(utils.Thread):
+class MetadataThread(utils.Base):
     def __clean_string__(self, val):
         try:
             cleaned = ''.join([i if ord(i) < 128 else ' ' for i in val])

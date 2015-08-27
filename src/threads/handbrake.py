@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 import utils
 
-class HandbrakeThread(utils.Thread):
+class HandbrakeThread(utils.Base):
     def run(self):
         print "Starting " + super(HandbrakeThread, self).get_name()
 

@@ -2,7 +2,7 @@ __author__ = 'Jaco-Hanekom'
 import threading
 
 
-class Thread(threading.Thread):
+class Base(object):
     messages = ["Queued", "Processing", "Done", "Error"]
     registered_files = dict()
 
@@ -35,9 +35,5 @@ class Thread(threading.Thread):
         return self.config
 
     def __init__(self, registered_files, config):
-        threading.Thread.__init__(self)
         self.registered_files = registered_files
         self.config = config
-
-    def run(self):
-        None

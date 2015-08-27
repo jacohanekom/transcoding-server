@@ -2,7 +2,7 @@ __author__ = 'jacohanekom'
 
 import utils, time
 
-class SchedulerThread(utils.Thread):
+class SchedulerThread(utils.Base):
       modes = ['HandbrakeThread', 'MetadataThread','PublishThread']
 
       def get_class_identifier(self, class_name):

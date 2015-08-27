@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import utils
 
-class PublishThread(utils.Thread):
+class PublishThread(utils.Base):
     def __get_tv_show_destination__(self, show):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
