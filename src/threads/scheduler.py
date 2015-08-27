@@ -22,15 +22,17 @@ class SchedulerThread(utils.Thread):
             while True:
                 for uuid in super(SchedulerThread, self).registered_files:
                     item = super(SchedulerThread, self).get_storage(uuid)
+                    print item
 
                     if hasattr(item, "status"):
                         details = item.status.state.split("-")
 
                         if details[1] == super(SchedulerThread, self).messages[2]:
                             class_indicator = self.get_class_identifier(details[0])
+                            print class_indicator
 
                             if class_indicator == -1 or class_indicator + 2 > len(self.modes):
-                                #del super(SchedulerThread, self).registered_files[uuid]
+                                del super(SchedulerThread, self).registered_files[uuid]
                                 item = None
                             else:
                                 item.status.state = self.modes[class_indicator+1] + "-" + \
