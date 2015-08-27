@@ -35,7 +35,7 @@ class rpcInterface():
         if not self.__is_file_supported__(file):
             raise Exception('File not supported')
 
-        instruction = type('movie', (), {})()
+        instruction = type('tvshow', (), {})()
         setattr(instruction, 'file', file)
 
         metadata = type('metadata', (), {})()
@@ -84,6 +84,7 @@ class rpcInterface():
                 if t[result["show"]][result["season"]][result["episode"]]["episodename"] is None:
                     return []
                 else:
+
                     return result
             except:
                 return []

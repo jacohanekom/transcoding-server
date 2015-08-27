@@ -11,19 +11,17 @@ import traceback
 from hachoir_core.cmd_line import unicodeFilename
 from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
-import utils
+import utils, sys
 
 class MetadataThread(utils.Base):
     def __clean_string__(self, val):
         try:
             cleaned = ''.join([i if ord(i) < 128 else ' ' for i in val])
-            str = str(cleaned).encode('ascii', 'xmlcharrefreplace')
+            cleaned = cleaned.encode('ascii', 'xmlcharrefreplace')
 
-            str = str.replace("<", "&lt;")
-            str = str.replace(">", "&gt;")
-            str = str.replace("\"", "&quot;")
-            return str
+            return cleaned.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
         except:
+            print sys.exc_info()[0]
             return ""
 
     def get_movie_metadata(self, movie, year):
@@ -107,8 +105,8 @@ class MetadataThread(utils.Base):
             results['--TVShowName'] = self.__clean_string__(show['seriesname'])
             results['--TVNetwork'] = self.__clean_string__(show['network'])
             results['--TVEpisode'] = self.__clean_string__('S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2)))
-            results['--TVSeasonNum'] = self.__clean_string__(season)
-            results['--TVEpisodeNum'] = self.__clean_string__(episode)
+            results['--TVSeasonNum'] = season
+            results['--TVEpisodeNum'] = episode
 
             results['--description'] = self.__clean_string__(show[season][episode]['overview'][:255] + (show[season][episode]['overview'][255:] and '..'))
             results['--longdesc'] = self.__clean_string__(show[season][episode]['overview'])
@@ -135,6 +133,7 @@ class MetadataThread(utils.Base):
                 contentrating = show['contentrating']
 
             tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|500|'.format(contentrating=contentrating)
+            tags['id'] = show[season][episode]["seasonid"]
             return tags
         else:
             return None
@@ -153,18 +152,24 @@ class MetadataThread(utils.Base):
 
         output += '</dict>'
         output += '</plist>'
+
+        print output
+
         return formatter.format_string(output)
 
     def __get_split_list__(self, value):
+        result = []
+
         if value is not None:
-            result = []
             if value.startswith('|'):
-                result = self.__clean_string__(value[1:-1].split('|'))
+                for val in value[1:-1].split('|'):
+                    result.append(self.__clean_string__(val))
             else:
                 result.append(self.__clean_string__(value))
+
             return result
         else:
-            return ""
+            return result
 
     def __get_dictionary_plist__(self, name, list):
         output = '<key>{name}</key>'.format(name=name.encode('utf-8'))
@@ -173,7 +178,7 @@ class MetadataThread(utils.Base):
             output += '<dict>'
             output += '<key>{name}</key>'.format(name='name')
             output += '<string>{name}</string>'.format(name=value)
-        output += '</dict>'
+            output += '</dict>'
         output += '</array>'
         return output
 
@@ -250,24 +255,23 @@ class MetadataThread(utils.Base):
                 file.metadata.show,file.metadata.season,
                 file.metadata.episode, getattr(file.metadata, "year", None))
 
-            cover_image = self.get_tumbler_cover_art(tags['--artist'], file.metadata.season)
+            cover_image = self.get_tumbler_cover_art(tags["id"])
             if cover_image :
-                tags['--artwork'] = cover_image
+                tags['standard']['--artwork'] = cover_image
 
-            if '--artist' in tags:
-                file.metadata.name = tags['--artist'].replace(":", " ").replace("/", " ")
-                setattr(file.metadata, "title", tags['--title'].replace(":", " ").replace("/", " "))
+            if '--artist' in tags['standard']:
+                file.metadata.show = tags['standard']['--artist'].replace(":", " ").replace("/", " ")
 
         elif file.metadata.type == 'movie':
             tags = self.get_movie_metadata(file.metadata.name, file.metadata.year)
             cover_image = self.get_movie_cover_art(file.metadata.name, file.metadata.year)
 
             if cover_image:
-                tags['--artwork'] = cover_image
+                tags['standard']['--artwork'] = cover_image
 
         if tags:
-            tags['--hdvideo'] = self.get_hd_tag(output)
-            self.tagFile(output, tags)
+            tags['standard']['--hdvideo'] = self.get_hd_tag(output)
+            self.tag_atomic_parsley(output, tags)
 
         file.status.state = super(MetadataThread, self).state_text(2)
         return file

@@ -41,4 +41,4 @@ if __name__ == '__main__':
     server.register_instance(rpcInterface(storage))
     server.serve_forever()
 
-print "Server is ready"
+    print "Server is ready"

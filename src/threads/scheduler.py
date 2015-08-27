@@ -22,7 +22,7 @@ class SchedulerThread(utils.Base):
                 self.local_modes.append(mode.split(".")[1])
 
             while True:
-                for uuid in super(SchedulerThread, self).registered_files:
+                for uuid in super(SchedulerThread, self).get_storage():
                     item = super(SchedulerThread, self).get_storage(uuid)
                     print item
 
@@ -35,10 +35,10 @@ class SchedulerThread(utils.Base):
 
                             if class_indicator == -1 or class_indicator + 2 > len(self.local_modes):
                                 del super(SchedulerThread, self).registered_files[uuid]
-                                item = None
                             else:
                                 item.status.state = self.local_modes[class_indicator+1] + "-" + \
                                                     super(SchedulerThread, self).messages[0]
+                                super(SchedulerThread, self).update_storage(uuid,item)
 
                     else:
                         status = type('status', (), {})()
@@ -48,8 +48,6 @@ class SchedulerThread(utils.Base):
                         setattr(status, 'fps', '0')
 
                         setattr(item, 'status', status)
-
-                    if item:
                         super(SchedulerThread, self).update_storage(uuid,item)
 
                 time.sleep(60)

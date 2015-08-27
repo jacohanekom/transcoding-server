@@ -9,13 +9,13 @@ class PublishThread(utils.Base):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title.replace("/",""),
+             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.show,
              ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )
         else:
            output = "{show} - S{season}E{episode}-E{episode1} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title.replace("/",""),
+             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.show,
              episode1 = str(show.metadata.episode+1).zfill(2),
              ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )
@@ -48,7 +48,7 @@ class PublishThread(utils.Base):
                 try:
                     converted_file = os.path.join(tempfile.gettempdir(), uuid +
                                                   super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
-                    file.status.state = self.state_text(1)
+                    file.status.state = super(PublishThread, self).state_text(1)
                     super(PublishThread, self).updateStorage(uuid, file)
 
                     if file.metadata.type == 'tv':
@@ -81,7 +81,7 @@ class PublishThread(utils.Base):
                     file.status.state = super(PublishThread, self).state_text(2)
                     super(PublishThread, self).update_storage(uuid, file)
                 except:
-                    file.status.state = super(PublishThread, self).state_text(3, error=sys.exc_info()[0])
+                    file.status.state = super(PublishThread, self).state_text(3, sys.exc_info()[0])
                     super(PublishThread, self).update_storage(uuid, file)
 
             time.sleep(60)

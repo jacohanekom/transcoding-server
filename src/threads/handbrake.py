@@ -17,7 +17,7 @@ class HandbrakeThread(utils.Base):
                     success = False
                     start = time.time()
 
-                    file.status.state = super(HandbrakeThread, self).get_status(1)
+                    file.status.state = super(HandbrakeThread, self).state_text(1)
                     super(HandbrakeThread, self).update_storage(uuid, file)
 
                     output = os.path.join(tempfile.gettempdir(), uuid + super(HandbrakeThread, self).get_config()['HANDBRAKE_EXTENSION'])
@@ -34,13 +34,13 @@ class HandbrakeThread(utils.Base):
                             super(HandbrakeThread, self).update_storage(uuid, file)
 
                         if 'Encode done' in content:
-                            file.status.state = super(HandbrakeThread, self).get_status(2)
+                            file.status.state = super(HandbrakeThread, self).state_text(2)
                             file.status.percent = '100'
                             super(HandbrakeThread, self).update_storage(uuid, file)
                             break
 
                         if 'HandBrake has exited.' in content:
-                            file.status.state = super(HandbrakeThread, self).get_status(3)
+                            file.status.state = super(HandbrakeThread, self).state_text(3)
                             super(HandbrakeThread, self).update_storage(uuid, file)
                             break
                 except:
