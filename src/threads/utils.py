@@ -25,8 +25,9 @@ class Thread(threading.Thread):
         to_be_processed = list()
 
         for uuid in self.registered_files:
-            if self.registered_files[uuid].status.state == self.__class__ + '-' + self.messages[0]:
-                to_be_processed.append(uuid)
+            if hasattr(self.registered_files[uuid], "status"):
+                if self.registered_files[uuid].status.state == self.__class__ + '-' + self.messages[0]:
+                    to_be_processed.append(uuid)
 
         return to_be_processed
 
