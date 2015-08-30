@@ -9,13 +9,13 @@ class PublishThread(utils.Base):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.show,
+             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title,
              ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )
         else:
            output = "{show} - S{season}E{episode}-E{episode1} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
-             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.show,
+             episode = str(show.metadata.episode).zfill(2), showname = show.metadata.title,
              episode1 = str(show.metadata.episode+1).zfill(2),
              ext = super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION']
            )

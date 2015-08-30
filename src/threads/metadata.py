@@ -262,6 +262,9 @@ class MetadataThread(utils.Base):
             if '--artist' in tags['standard']:
                 file.metadata.show = tags['standard']['--artist'].replace(":", " ").replace("/", " ")
 
+            if '--title' in tags['standard']:
+                setattr(file.metadata, "title", tags['standard']['--title'].replace(":", " ").replace("/", " "))
+
         elif file.metadata.type == 'movie':
             tags = self.get_movie_metadata(file.metadata.name, file.metadata.year)
             cover_image = self.get_movie_cover_art(file.metadata.name, file.metadata.year)
