@@ -5,7 +5,7 @@ import tempfile
 import utils
 
 class PublishThread(utils.Base):
-    def __get_tv_show_destination__(self, show):
+    def __get_series_destination__(self, show):
         if show.metadata.double_episode == 0:
            output = "{show} - S{season}E{episode} - {showname}{ext}".format(
              show = show.metadata.show, season = str(show.metadata.season).zfill(2),
@@ -26,7 +26,7 @@ class PublishThread(utils.Base):
 
     def __get_movie_destination__(self, movie):
         path = "{name} ({year}){ext}".format(name=movie.metadata.name, year=movie.metadata.year,
-                                              ext=super(PublishThread, self).get_config()['self.HANDBRAKE_EXTENSION'])
+                                              ext=super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
 
         return [os.path.join(self.__get_drive_mount__(movie.metadata.name), super(PublishThread, self)
                              .get_config()['PUBLISH_MOVIES_FOLDER']), path]
@@ -49,10 +49,10 @@ class PublishThread(utils.Base):
                     converted_file = os.path.join(tempfile.gettempdir(), uuid +
                                                   super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
                     file.status.state = super(PublishThread, self).state_text(1)
-                    super(PublishThread, self).updateStorage(uuid, file)
+                    super(PublishThread, self).update_storage(uuid, file)
 
                     if file.metadata.type == 'tv':
-                        destination = self.get_series_destination(file)
+                        destination = self.__get_series_destination__(file)
 
                         if not os.path.isdir(destination[0]):
                             os.makedirs(destination[0])
@@ -65,7 +65,7 @@ class PublishThread(utils.Base):
                         os.remove(file.file)
 
                     elif file.metadata.type == 'movie':
-                        destination = self.get_movies_path(file)
+                        destination = self.__get_movie_destination__(file)
 
                         if not os.path.isdir(destination[0]):
                             os.makedirs(destination[0])

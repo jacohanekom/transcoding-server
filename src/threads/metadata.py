@@ -65,7 +65,7 @@ class MetadataThread(utils.Base):
                     producers.append(self.__clean_string__(crew['name']))
 
             for company in response.info()['production_companies']:
-                production_companies += ', ' + self.clean_string(company['name'])
+                production_companies += ', ' + self.__clean_string__(company['name'])
 
             results['--artist'] = directors[0]
             tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.__clean_string__(response.releases()['countries'][0]['certification']))
@@ -74,7 +74,7 @@ class MetadataThread(utils.Base):
             all_data.append(self.__get_dictionary_plist__('directors', directors))
             all_data.append(self.__get_dictionary_plist__('producers', producers))
             all_data.append(self.__get_dictionary_plist__('screenwriters', screenwriters))
-            tags['com.apple.iTunes;iTunMOVI'] = self.__get_dictionary_plist__(all_data, production_companies[2:])
+            tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(all_data, production_companies[2:])
             tags['standard'] = results
             return tags
         else:

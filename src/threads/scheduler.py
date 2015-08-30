@@ -34,7 +34,7 @@ class SchedulerThread(utils.Base):
                             print class_indicator
 
                             if class_indicator == -1 or class_indicator + 2 > len(self.local_modes):
-                                del super(SchedulerThread, self).registered_files[uuid]
+                                super(SchedulerThread, self).delete_item(uuid)
                             else:
                                 item.status.state = self.local_modes[class_indicator+1] + "-" + \
                                                     super(SchedulerThread, self).messages[0]

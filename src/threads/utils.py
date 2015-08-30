@@ -37,6 +37,9 @@ class Base(object):
     def get_config(self):
         return self.config
 
+    def delete_item(self, uuid):
+        del self.registered_files[uuid]
+
     def __init__(self, registered_files, config):
         self.registered_files = registered_files
         self.config = config
