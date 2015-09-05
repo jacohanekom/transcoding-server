@@ -274,6 +274,7 @@ class MetadataThread(utils.Base):
 
         if tags:
             tags['standard']['--hdvideo'] = self.get_hd_tag(output)
+            setattr(file, "hd_indicator", tags['standard']['--hdvideo'])
             self.tag_atomic_parsley(output, tags)
 
         file.status.state = super(MetadataThread, self).state_text(2)

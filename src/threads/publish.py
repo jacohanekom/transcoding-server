@@ -70,6 +70,7 @@ class PublishThread(utils.Base):
                                                   super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
                     file.status.state = super(PublishThread, self).state_text(1)
                     super(PublishThread, self).update_storage(uuid, file)
+                    destination = None
 
                     if not self.__has_metadata__(super(PublishThread, self).get_config()['METADATA_ATOMIC_PARSLEY'], converted_file):
                         #try and download metadata again
@@ -101,6 +102,9 @@ class PublishThread(utils.Base):
 
                             os.remove(converted_file)
                             os.remove(file.file)
+
+                        if destination:
+                            setattr(file, "destination", destination)
 
                         file.status.state = super(PublishThread, self).state_text(2)
                         super(PublishThread, self).update_storage(uuid, file)
