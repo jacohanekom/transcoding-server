@@ -3,6 +3,7 @@ import time
 import shutil
 import tempfile
 import utils
+import subprocess
 
 class PublishThread(utils.Base):
     def __get_series_destination__(self, show):
@@ -40,6 +41,25 @@ class PublishThread(utils.Base):
 
         return tempfile.gettempdir()
 
+    def __has_metadata__(self, atomic_parsley_path, file):
+        cmd = [atomic_parsley_path, file, '-t']
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        content = ""
+
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        while True:
+            out = proc.stdout.readline()
+            content += repr(out)
+
+            if out == '':
+                break
+
+        if content.count("Atom") < 2:
+            return False
+        else:
+            return True
+
+
     def run(self):
         print 'Starting ' + super(PublishThread, self).get_name()
         while True:
@@ -51,35 +71,39 @@ class PublishThread(utils.Base):
                     file.status.state = super(PublishThread, self).state_text(1)
                     super(PublishThread, self).update_storage(uuid, file)
 
-                    if file.metadata.type == 'tv':
-                        destination = self.__get_series_destination__(file)
+                    if not self.__has_metadata__(super(PublishThread, self).get_config()['METADATA_ATOMIC_PARSLEY'], converted_file):
+                        #try and download metadata again
+                        file.status.state = super(PublishThread, self).state_text(4)
+                        super(PublishThread, self).update_storage(uuid, file)
+                    else :
+                        if file.metadata.type == 'tv':
+                            destination = self.__get_series_destination__(file)
 
-                        if not os.path.isdir(destination[0]):
-                            os.makedirs(destination[0])
+                            if not os.path.isdir(destination[0]):
+                                os.makedirs(destination[0])
 
-                        if os.path.isfile(os.path.join(destination[0], destination[1])):
-                            raise Exception('File Already exist')
-                        else:
-                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
-                        os.remove(converted_file)
-                        os.remove(file.file)
+                            if os.path.isfile(os.path.join(destination[0], destination[1])):
+                                raise Exception('File Already exist')
+                            else:
+                                shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                            os.remove(converted_file)
+                            os.remove(file.file)
+                        elif file.metadata.type == 'movie':
+                            destination = self.__get_movie_destination__(file)
 
-                    elif file.metadata.type == 'movie':
-                        destination = self.__get_movie_destination__(file)
+                            if not os.path.isdir(destination[0]):
+                                os.makedirs(destination[0])
 
-                        if not os.path.isdir(destination[0]):
-                            os.makedirs(destination[0])
+                            if os.path.isfile(os.path.join(destination[0], destination[1])):
+                                raise Exception('File Already Exist')
+                            else:
+                                shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
 
-                        if os.path.isfile(os.path.join(destination[0], destination[1])):
-                            raise Exception('File Already Exist')
-                        else:
-                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                            os.remove(converted_file)
+                            os.remove(file.file)
 
-                        os.remove(converted_file)
-                        os.remove(file.file)
-
-                    file.status.state = super(PublishThread, self).state_text(2)
-                    super(PublishThread, self).update_storage(uuid, file)
+                        file.status.state = super(PublishThread, self).state_text(2)
+                        super(PublishThread, self).update_storage(uuid, file)
                 except:
                     file.status.state = super(PublishThread, self).state_text(3, sys.exc_info()[0])
                     super(PublishThread, self).update_storage(uuid, file)

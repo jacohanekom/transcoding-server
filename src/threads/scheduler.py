@@ -24,14 +24,12 @@ class SchedulerThread(utils.Base):
             while True:
                 for uuid in super(SchedulerThread, self).get_storage():
                     item = super(SchedulerThread, self).get_storage(uuid)
-                    print item
 
                     if hasattr(item, "status"):
                         details = item.status.state.split("-")
 
                         if details[1] == super(SchedulerThread, self).messages[2]:
                             class_indicator = self.get_class_identifier(details[0])
-                            print class_indicator
 
                             if class_indicator == -1 or class_indicator + 2 > len(self.local_modes):
                                 super(SchedulerThread, self).delete_item(uuid)
@@ -39,6 +37,12 @@ class SchedulerThread(utils.Base):
                                 item.status.state = self.local_modes[class_indicator+1] + "-" + \
                                                     super(SchedulerThread, self).messages[0]
                                 super(SchedulerThread, self).update_storage(uuid,item)
+                        if details[1] == super(SchedulerThread, self).messages[4]:
+                            class_indicator = self.get_class_identifier(details[0])
+
+                            item.status.state = self.local_modes[class_indicator-1] + "-" + \
+                                                super(SchedulerThread, self).messages[0]
+                            super(SchedulerThread, self).update_storage(uuid,item)
 
                     else:
                         status = type('status', (), {})()

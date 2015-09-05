@@ -3,7 +3,7 @@ import threading
 
 
 class Base(object):
-    messages = ["Queued", "Processing", "Done", "Error"]
+    messages = ["Queued", "Processing", "Done", "Error", "Reverse"]
     registered_files = dict()
 
     def get_name(self):

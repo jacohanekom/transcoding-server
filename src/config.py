@@ -24,4 +24,5 @@ COUCHPOTATO_HTTP_FOLDER = 'couchpotato'
 COUCHPOTATO_API_KEY = '493fe37447ca4ed58385cfb2f66ce60f'
 HANDBRAKE_SUPPORTED_FILES = [".mkv",".mp4",".avi",".wmv", ".m4v"]
 HANDBRAKE_MIN_SIZE=100048576
+HANDBRAKE_MIN_SIZE=100
 MODES = ['threads.HandbrakeThread', 'threads.MetadataThread','threads.PublishThread']
