@@ -36,7 +36,7 @@ if __name__ == '__main__':
         thread.start_new_thread(start_thread, (cls, storage, config_dict))
 
     # Create server
-    server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler)
+    server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler, allow_none=True)
     server.register_introspection_functions()
     server.register_instance(rpcInterface(storage))
     server.serve_forever()
