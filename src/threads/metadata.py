@@ -25,60 +25,63 @@ class MetadataThread(utils.Base):
             return ""
 
     def get_movie_metadata(self, movie, year):
-        tags = {}
-        results = {}
-        search = tmdb.Search()
-        search.movie(query=movie)
-        for s in search.results:
-            if 'release_date' in s:
-                if int(s['release_date'][0:4]) == int(year):
-                    response = tmdb.Movies(s['id'])
-                    break
+        try:
+            tags = {}
+            results = {}
+            search = tmdb.Search()
+            search.movie(query=movie)
+            for s in search.results:
+                if 'release_date' in s:
+                    if int(s['release_date'][0:4]) == int(year):
+                        response = tmdb.Movies(s['id'])
+                        break
 
-        if response:
-            results['--title'] = self.__clean_string__(response.info()['title'])
-            results['--comment'] = self.__clean_string__('Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.')
-            results['--genre'] = self.__clean_string__(response.info()['genres'][0]['name'])
-            results['--year'] = self.__clean_string__('{time}T10:00:00Z'.format(time=response.info()['release_date']))
+            if response:
+                results['--title'] = self.__clean_string__(response.info()['title'])
+                results['--comment'] = self.__clean_string__('Information courtesy of The Movie Database (http://www.themoviedb.com). Used with permission.')
+                results['--genre'] = self.__clean_string__(response.info()['genres'][0]['name'])
+                results['--year'] = self.__clean_string__('{time}T10:00:00Z'.format(time=response.info()['release_date']))
 
-            results['--description'] = self.__clean_string__(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
-            results['--longdesc'] = self.__clean_string__(response.info()['overview'])
+                results['--description'] = self.__clean_string__(response.info()['tagline'][:255] + (response.info()['tagline'][255:] and '..'))
+                results['--longdesc'] = self.__clean_string__(response.info()['overview'])
 
-            results['--stik'] = 'Short Film'
-            results['--advisory'] = 'Inoffensive'
-            results['--gapless'] = 'false'
+                results['--stik'] = 'Short Film'
+                results['--advisory'] = 'Inoffensive'
+                results['--gapless'] = 'false'
 
-            actors = []
-            directors = []
-            producers = []
-            screenwriters = []
-            production_companies = ''
-            for credit in response.credits()['cast']:
-                actors.append(self.__clean_string__(credit['name']))
+                actors = []
+                directors = []
+                producers = []
+                screenwriters = []
+                production_companies = ''
+                for credit in response.credits()['cast']:
+                    actors.append(self.__clean_string__(credit['name']))
 
-            for crew in response.credits()['crew']:
-                if crew['department'] == 'Directing':
-                    directors.append(self.__clean_string__(crew['name']))
-                elif crew['department'] == 'Writing':
-                    screenwriters.append(self.__clean_string__(crew['name']))
-                elif crew['department'] == 'Production':
-                    producers.append(self.__clean_string__(crew['name']))
+                for crew in response.credits()['crew']:
+                    if crew['department'] == 'Directing':
+                        directors.append(self.__clean_string__(crew['name']))
+                    elif crew['department'] == 'Writing':
+                        screenwriters.append(self.__clean_string__(crew['name']))
+                    elif crew['department'] == 'Production':
+                        producers.append(self.__clean_string__(crew['name']))
 
-            for company in response.info()['production_companies']:
-                production_companies += ', ' + self.__clean_string__(company['name'])
+                for company in response.info()['production_companies']:
+                    production_companies += ', ' + self.__clean_string__(company['name'])
 
-            results['--artist'] = directors[0]
-            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.__clean_string__(response.releases()['countries'][0]['certification']))
-            all_data = []
-            all_data.append(self.__get_dictionary_plist__('cast', actors))
-            all_data.append(self.__get_dictionary_plist__('directors', directors))
-            all_data.append(self.__get_dictionary_plist__('producers', producers))
-            all_data.append(self.__get_dictionary_plist__('screenwriters', screenwriters))
-            tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(all_data, production_companies[2:])
-            tags['standard'] = results
-            tags['imdb_id'] = response.info()['imdb_id']
-            return tags
-        else:
+                results['--artist'] = directors[0]
+                tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|200|'.format(contentrating=self.__clean_string__(response.releases()['countries'][0]['certification']))
+                all_data = []
+                all_data.append(self.__get_dictionary_plist__('cast', actors))
+                all_data.append(self.__get_dictionary_plist__('directors', directors))
+                all_data.append(self.__get_dictionary_plist__('producers', producers))
+                all_data.append(self.__get_dictionary_plist__('screenwriters', screenwriters))
+                tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(all_data, production_companies[2:])
+                tags['standard'] = results
+                tags['imdb_id'] = response.info()['imdb_id']
+                return tags
+            else:
+                return None
+        except:
             return None
 
     def get_tv_metadata(self, show_name, season, episode, year=None):
@@ -86,57 +89,60 @@ class MetadataThread(utils.Base):
         results = {}
         tvdb_interface = tvdb_api.Tvdb(actors=True)
 
-        if year:
-            try:
-                show = tvdb_interface[show_name + ' (' + str(year) + ')']
-            except tvdb_exceptions.tvdb_shownotfound:
+        try:
+            if year:
+                try:
+                    show = tvdb_interface[show_name + ' (' + str(year) + ')']
+                except tvdb_exceptions.tvdb_shownotfound:
+                    show = tvdb_interface[show_name]
+            else:
                 show = tvdb_interface[show_name]
-        else:
-            show = tvdb_interface[show_name]
 
-        if show:
-            results['--title'] = self.__clean_string__(show[season][episode]['episodename'])
-            results['--artist'] = self.__clean_string__(show['seriesname'])
-            results['--album'] = self.__clean_string__('{showName}, season {season}'.format(showName=show['seriesname'], season=season))
-            results['--comment'] = self.__clean_string__('Information courtesy of The TVDB (http://www.thetvdb.com). Used with permission.')
-            results['--genre'] = self.__clean_string__(show['genre'][1:].split('|')[0])
-            results['--year'] = self.__clean_string__('{time}T10:00:00Z'.format(time=show[season][episode]['firstaired']))
-            results['--tracknum'] = self.__clean_string__('{ep}/{total}'.format(ep=episode, total=len(show[season])))
-            results['--disk'] = self.__clean_string__('{season}/{total}'.format(season=season, total=len(show)))
-            results['--TVShowName'] = self.__clean_string__(show['seriesname'])
-            results['--TVNetwork'] = self.__clean_string__(show['network'])
-            results['--TVEpisode'] = self.__clean_string__('S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2)))
-            results['--TVSeasonNum'] = season
-            results['--TVEpisodeNum'] = episode
+            if show:
+                results['--title'] = self.__clean_string__(show[season][episode]['episodename'])
+                results['--artist'] = self.__clean_string__(show['seriesname'])
+                results['--album'] = self.__clean_string__('{showName}, season {season}'.format(showName=show['seriesname'], season=season))
+                results['--comment'] = self.__clean_string__('Information courtesy of The TVDB (http://www.thetvdb.com). Used with permission.')
+                results['--genre'] = self.__clean_string__(show['genre'][1:].split('|')[0])
+                results['--year'] = self.__clean_string__('{time}T10:00:00Z'.format(time=show[season][episode]['firstaired']))
+                results['--tracknum'] = self.__clean_string__('{ep}/{total}'.format(ep=episode, total=len(show[season])))
+                results['--disk'] = self.__clean_string__('{season}/{total}'.format(season=season, total=len(show)))
+                results['--TVShowName'] = self.__clean_string__(show['seriesname'])
+                results['--TVNetwork'] = self.__clean_string__(show['network'])
+                results['--TVEpisode'] = self.__clean_string__('S{season}E{episode}'.format(season=str(season).zfill(2), episode=str(episode).zfill(2)))
+                results['--TVSeasonNum'] = season
+                results['--TVEpisodeNum'] = episode
 
-            results['--description'] = self.__clean_string__(show[season][episode]['overview'][:255] + (show[season][episode]['overview'][255:] and '..'))
-            results['--longdesc'] = self.__clean_string__(show[season][episode]['overview'])
+                results['--description'] = self.__clean_string__(show[season][episode]['overview'][:255] + (show[season][episode]['overview'][255:] and '..'))
+                results['--longdesc'] = self.__clean_string__(show[season][episode]['overview'])
 
-            results['--storedesc'] = self.__clean_string__(show['overview'])
-            results['--stik'] = 'TV Show'
-            results['--advisory'] = 'Inoffensive'
-            results['--gapless'] = 'false'
+                results['--storedesc'] = self.__clean_string__(show['overview'])
+                results['--stik'] = 'TV Show'
+                results['--advisory'] = 'Inoffensive'
+                results['--gapless'] = 'false'
 
-            if 'poster' in show.data.keys():
-                destination = os.path.join(tempfile.gettempdir(), show['poster'].split('/')[(len(show['poster'].split('/')) - 1)])
-                urllib.urlretrieve(show['poster'], destination)
-                results['--artwork'] = destination
+                if 'poster' in show.data.keys():
+                    destination = os.path.join(tempfile.gettempdir(), show['poster'].split('/')[(len(show['poster'].split('/')) - 1)])
+                    urllib.urlretrieve(show['poster'], destination)
+                    results['--artwork'] = destination
 
-            plist_records = []
-            plist_records.append(self.__get_dictionary_plist__('cast', self.__get_split_list__(show['actors'])))
-            plist_records.append(self.__get_dictionary_plist__('directors', self.__get_split_list__(show[season][episode]['director'])))
-            plist_records.append(self.__get_dictionary_plist__('screenwriters', self.__get_split_list__(show[season][episode]['writer'])))
-            tags['standard'] = results
-            tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(plist_records)
-            contentrating = 'TV-14'
+                plist_records = []
+                plist_records.append(self.__get_dictionary_plist__('cast', self.__get_split_list__(show['actors'])))
+                plist_records.append(self.__get_dictionary_plist__('directors', self.__get_split_list__(show[season][episode]['director'])))
+                plist_records.append(self.__get_dictionary_plist__('screenwriters', self.__get_split_list__(show[season][episode]['writer'])))
+                tags['standard'] = results
+                tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(plist_records)
+                contentrating = 'TV-14'
 
-            if show['contentrating'] is not None:
-                contentrating = show['contentrating']
+                if show['contentrating'] is not None:
+                    contentrating = show['contentrating']
 
-            tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|500|'.format(contentrating=contentrating)
-            tags['id'] = show[season][episode]["seasonid"]
-            return tags
-        else:
+                tags['com.apple.iTunes;iTunEXTC'] = 'us-tv|{contentrating}|500|'.format(contentrating=contentrating)
+                tags['id'] = show[season][episode]["seasonid"]
+                return tags
+            else:
+                return None
+        except:
             return None
 
     def __build_plist__(self, values, studio = None):
@@ -256,22 +262,24 @@ class MetadataThread(utils.Base):
                 file.metadata.show,file.metadata.season,
                 file.metadata.episode, getattr(file.metadata, "year", None))
 
-            cover_image = self.get_tumbler_cover_art(tags["id"])
-            if cover_image :
-                tags['standard']['--artwork'] = cover_image
+            if tags:
+                cover_image = self.get_tumbler_cover_art(tags["id"])
+                if cover_image :
+                    tags['standard']['--artwork'] = cover_image
 
-            if '--artist' in tags['standard']:
-                file.metadata.show = tags['standard']['--artist'].replace(":", " ").replace("/", " ")
+                if '--artist' in tags['standard']:
+                    file.metadata.show = tags['standard']['--artist'].replace(":", " ").replace("/", " ")
 
-            if '--title' in tags['standard']:
-                setattr(file.metadata, "title", tags['standard']['--title'].replace(":", " ").replace("/", " "))
-
+                if '--title' in tags['standard']:
+                    setattr(file.metadata, "title", tags['standard']['--title'].replace(":", " ").replace("/", " "))
         elif file.metadata.type == 'movie':
             tags = self.get_movie_metadata(file.metadata.name, file.metadata.year)
-            cover_image = self.get_movie_cover_art(file.metadata.name, file.metadata.year)
 
-            if cover_image:
-                tags['standard']['--artwork'] = cover_image
+            if tags:
+                cover_image = self.get_movie_cover_art(file.metadata.name, file.metadata.year)
+
+                if cover_image:
+                    tags['standard']['--artwork'] = cover_image
 
         if tags:
             tags['standard']['--hdvideo'] = self.get_hd_tag(output)
