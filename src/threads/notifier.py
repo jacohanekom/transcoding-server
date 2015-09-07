@@ -22,13 +22,18 @@ class NotifierThread(utils.Base):
                 cur.execute("UPDATE tv_episodes SET status = ? WHERE showid=? AND season=? AND episode=?",
                             (status, data[0], season, episode))
 
-
         except lite.Error, e:
             print "Unable to register show"
         finally:
             if con:
                 con.commit()
                 con.close()
+
+    def __mark_movie_as_done__(self, imdb_id, quality):
+        None
+
+
+
 
     def __get_sickbeard_indicator__(self, file):
         result = 3276804
@@ -50,6 +55,7 @@ class NotifierThread(utils.Base):
         while True:
             for uuid in super(NotifierThread, self).get_available_files():
                 file = super(NotifierThread, self).get_storage(uuid)
+                file.status.state = super(NotifierThread, self).state_text(1)
 
                 if hasattr(file, "destination"):
                     if file.metadata.type == 'tv':
@@ -60,4 +66,6 @@ class NotifierThread(utils.Base):
                     elif file.metadata.type == 'movie':
                         None
 
+                file.status.state = super(NotifierThread, self).state_text(2)
+                super(NotifierThread, self).update_storage(uuid, file)
             time.sleep(60)

@@ -76,6 +76,7 @@ class MetadataThread(utils.Base):
             all_data.append(self.__get_dictionary_plist__('screenwriters', screenwriters))
             tags['com.apple.iTunes;iTunMOVI'] = self.__build_plist__(all_data, production_companies[2:])
             tags['standard'] = results
+            tags['imdb_id'] = response.info()['imdb_id']
             return tags
         else:
             return None
@@ -275,6 +276,10 @@ class MetadataThread(utils.Base):
         if tags:
             tags['standard']['--hdvideo'] = self.get_hd_tag(output)
             setattr(file, "hd_indicator", tags['standard']['--hdvideo'])
+
+            if 'imdb_id' in tags:
+                setattr(file, "imdb_id", tags['imdb_id'])
+
             self.tag_atomic_parsley(output, tags)
 
         file.status.state = super(MetadataThread, self).state_text(2)
