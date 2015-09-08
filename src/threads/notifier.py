@@ -1,13 +1,13 @@
 __author__ = 'jacohanekom'
 
-import utils, time
+import utils, time, os
 from hachoir_core.cmd_line import unicodeFilename
 from hachoir_metadata import extractMetadata
 from hachoir_parser import createParser
 import sqlite3 as lite
 
 class NotifierThread(utils.Base):
-    def __mark_episode_as_done__(self, show_name, season, episode, status):
+    def __mark_episode_as_done__(self, show_name, season, episode, status, destination):
         con = None
 
         try:
@@ -19,8 +19,8 @@ class NotifierThread(utils.Base):
             data = cur.fetchone()
 
             if len(data) > 0:
-                cur.execute("UPDATE tv_episodes SET status = ? WHERE showid=? AND season=? AND episode=?",
-                            (status, data[0], season, episode))
+                cur.execute("UPDATE tv_episodes SET status=?, destination=?, filesize=? WHERE showid=? AND season=? AND episode=?",
+                            (status, destination, os.path.getsize(destination), data[0], season, episode))
 
         except lite.Error, e:
             print "Unable to register show"
