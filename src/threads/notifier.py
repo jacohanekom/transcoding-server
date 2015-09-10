@@ -19,8 +19,9 @@ class NotifierThread(utils.Base):
             data = cur.fetchone()
 
             if len(data) > 0:
-                cur.execute("UPDATE tv_episodes SET status=?, destination=?, filesize=? WHERE showid=? AND season=? AND episode=?",
-                            (status, destination, os.path.getsize(destination), data[0], season, episode))
+                cur.execute("UPDATE tv_episodes SET status=?, location=?, file_size=? WHERE showid=? AND season=? AND episode=?",
+                            (status, os.path.join(destination[0], destination[1]), os.path.getsize(os.path.join(destination[0],
+                                destination[1])), data[0], season, episode))
 
         except lite.Error, e:
             print "Unable to register show"
@@ -62,7 +63,8 @@ class NotifierThread(utils.Base):
                         self.__mark_episode_as_done__(file.metadata.show,
                                                       file.metadata.season,
                                                       file.metadata.episode,
-                                                      self.__get_sickbeard_indicator__(file))
+                                                      self.__get_sickbeard_indicator__(file),
+                                                      file.destination)
                     elif file.metadata.type == 'movie':
                         None
 
