@@ -84,9 +84,9 @@ class PublishThread(utils.Base):
                                 os.makedirs(destination[0])
 
                             if os.path.isfile(os.path.join(destination[0], destination[1])):
-                                raise Exception('File Already exist')
-                            else:
-                                shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                                os.remove(os.path.join(destination[0], destination[1]))
+
+                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
                             os.remove(converted_file)
                             os.remove(file.file)
                         elif file.metadata.type == 'movie':
@@ -96,10 +96,9 @@ class PublishThread(utils.Base):
                                 os.makedirs(destination[0])
 
                             if os.path.isfile(os.path.join(destination[0], destination[1])):
-                                raise Exception('File Already Exist')
-                            else:
-                                shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                                os.remove(os.path.join(destination[0], destination[1]))
 
+                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
                             os.remove(converted_file)
                             os.remove(file.file)
 
