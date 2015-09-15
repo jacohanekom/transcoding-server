@@ -214,7 +214,9 @@ class MetadataThread(utils.Base):
 
                     return destination
 
-    def tag_atomic_parsley(self, file, tags):
+    def tag_atomic_parsley(self, uuid, file, tags):
+        output = os.path.join(tempfile.gettempdir(), uuid + super(MetadataThread, self).get_config()['HANDBRAKE_EXTENSION'])
+
         cmd_to_execute = []
         iTunMOVI = tags['com.apple.iTunes;iTunMOVI']
         iTunEXTC = tags['com.apple.iTunes;iTunEXTC']
@@ -231,14 +233,20 @@ class MetadataThread(utils.Base):
          iTunEXTC,
          'name=iTunEXTC',
          'domain=com.apple.iTunes'] + ['--overWrite']
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        while proc.poll():
-            None
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
-        if proc.returncode == 0:
-            print True
-        else:
-            return False
+        while True:
+            out = proc.stdout.readline()
+            content = repr(out)
+
+            if 'Finished writing to temp file' in content:
+                file.status.metadata = 100
+                return True
+            elif 'Progress' in content:
+                if not hasattr(file.status, "metadata"):
+                    setattr(file.status, "metadata", "0")
+
+                file.status.metadata = int(content[content.index('%')-3:3])
 
     def get_hd_tag(self, video):
         result = 0
@@ -256,7 +264,6 @@ class MetadataThread(utils.Base):
         tmdb.API_KEY = super(MetadataThread, self).get_config()['METADATA_MOVIE_KEY']
 
     def process_file(self, uuid, file):
-        output = os.path.join(tempfile.gettempdir(), uuid + super(MetadataThread, self).get_config()['HANDBRAKE_EXTENSION'])
         if file.metadata.type == 'tv':
             tags = self.get_tv_metadata(
                 file.metadata.show,file.metadata.season,
