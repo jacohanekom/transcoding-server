@@ -232,7 +232,7 @@ class MetadataThread(utils.Base):
          'domain=com.apple.iTunes'] + ['--rDNSatom',
          iTunEXTC,
          'name=iTunEXTC',
-         'domain=com.apple.iTunes'] + ['--overWrite']
+         'domain=com.apple.iTunes']
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
         while True:
@@ -242,13 +242,24 @@ class MetadataThread(utils.Base):
             if 'Finished writing to temp file' in content:
                 file.status.metadata = 100
                 super(MetadataThread, self).update_storage(uuid, file)
+                self.__move_tagged_file(uuid)
                 return True
             elif 'Progress' in content:
                 if not hasattr(file.status, "metadata"):
-                    setattr(file.status, "metadata", "0")
+                    setattr(file.status, "metadata", 0)
 
-                file.status.metadata = int(content[content.index('%')-3:3])
+                file.status.metadata = int(content[content.index('%')-3:][:3].replace(' ',''))
                 super(MetadataThread, self).update_storage(uuid, file)
+
+
+    def __move_tagged_file(self, uuid):
+        output = os.path.join(tempfile.gettempdir(), uuid + super(MetadataThread, self).get_config()['HANDBRAKE_EXTENSION'])
+        os.remove(output)
+
+        for file in os.listdir(tempfile.gettempdir()):
+            if str(file).startswith(uuid):
+                os.rename(os.path.join(tempfile.gettempdir(), str(file)), output)
+                return
 
 
     def get_hd_tag(self, video):

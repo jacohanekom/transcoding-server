@@ -3,7 +3,7 @@ import time
 import shutil
 import tempfile
 import utils
-import subprocess
+import subprocess, traceback
 
 class PublishThread(utils.Base):
     def __get_series_destination__(self, show):
@@ -59,7 +59,6 @@ class PublishThread(utils.Base):
         else:
             return True
 
-
     def run(self):
         print 'Starting ' + super(PublishThread, self).get_name()
         while True:
@@ -68,6 +67,7 @@ class PublishThread(utils.Base):
                 try:
                     converted_file = os.path.join(tempfile.gettempdir(), uuid +
                                                   super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
+
                     file.status.state = super(PublishThread, self).state_text(1)
                     super(PublishThread, self).update_storage(uuid, file)
                     destination = None
@@ -98,7 +98,10 @@ class PublishThread(utils.Base):
                             if os.path.isfile(os.path.join(destination[0], destination[1])):
                                 os.remove(os.path.join(destination[0], destination[1]))
 
-                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                            result = os.system("cp '%s' '%s'" % (converted_file, (os.path.join(destination[0], destination[1]))))
+                            if result != 0:
+                                raise Exception("Unable to copy file")
+
                             os.remove(converted_file)
                             os.remove(file.file)
 
