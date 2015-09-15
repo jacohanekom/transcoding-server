@@ -86,7 +86,10 @@ class PublishThread(utils.Base):
                             if os.path.isfile(os.path.join(destination[0], destination[1])):
                                 os.remove(os.path.join(destination[0], destination[1]))
 
-                            shutil.copy2(converted_file, os.path.join(destination[0], destination[1]))
+                            result = os.system("cp '%s' '%s'" % (converted_file, (os.path.join(destination[0], destination[1]))))
+                            if result != 0:
+                                raise Exception("Unable to copy file")
+
                             os.remove(converted_file)
                             os.remove(file.file)
                         elif file.metadata.type == 'movie':
