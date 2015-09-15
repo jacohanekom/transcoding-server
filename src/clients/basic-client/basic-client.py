@@ -40,8 +40,6 @@ if __name__ == "__main__":
             if os.path.isfile(os.path.join(root, filename)):
                 extract_rar(os.path.join(root, filename))
 
-    sys.exit(0)
-
     s = xmlrpclib.ServerProxy(TRANSCODING_SERVER_URL, allow_none=True)
     for root, dirnames, filenames in os.walk(WATCH_PATH):
         for filename in fnmatch.filter(filenames, '*'):
