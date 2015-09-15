@@ -226,7 +226,7 @@ class MetadataThread(utils.Base):
 
         atomic_parsley_path = super(MetadataThread, self).get_config()['METADATA_ATOMIC_PARSLEY']
 
-        cmd = [atomic_parsley_path, file] + cmd_to_execute + ['--rDNSatom',
+        cmd = [atomic_parsley_path, output] + cmd_to_execute + ['--rDNSatom',
          iTunMOVI,
          'name=iTunMOVI',
          'domain=com.apple.iTunes'] + ['--rDNSatom',
@@ -241,12 +241,15 @@ class MetadataThread(utils.Base):
 
             if 'Finished writing to temp file' in content:
                 file.status.metadata = 100
+                super(MetadataThread, self).update_storage(uuid, file)
                 return True
             elif 'Progress' in content:
                 if not hasattr(file.status, "metadata"):
                     setattr(file.status, "metadata", "0")
 
                 file.status.metadata = int(content[content.index('%')-3:3])
+                super(MetadataThread, self).update_storage(uuid, file)
+
 
     def get_hd_tag(self, video):
         result = 0
@@ -264,6 +267,8 @@ class MetadataThread(utils.Base):
         tmdb.API_KEY = super(MetadataThread, self).get_config()['METADATA_MOVIE_KEY']
 
     def process_file(self, uuid, file):
+        output = os.path.join(tempfile.gettempdir(), uuid + super(MetadataThread, self).get_config()['HANDBRAKE_EXTENSION'])
+
         if file.metadata.type == 'tv':
             tags = self.get_tv_metadata(
                 file.metadata.show,file.metadata.season,
@@ -295,7 +300,7 @@ class MetadataThread(utils.Base):
             if 'imdb_id' in tags:
                 setattr(file, "imdb_id", tags['imdb_id'])
 
-            self.tag_atomic_parsley(output, tags)
+            self.tag_atomic_parsley(uuid, file, tags)
 
         file.status.state = super(MetadataThread, self).state_text(2)
         return file
