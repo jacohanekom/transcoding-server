@@ -1,7 +1,7 @@
-import os, xmlrpclib, subprocess, fnmatch
+import os, xmlrpclib, subprocess, fnmatch, sys
 
 TRANSCODING_SERVER_URL = 'http://localhost:8000/handbrake'
-WATCH_PATH = '/Users/administrator/Torrents/Complete/'
+WATCH_PATH = '/home/jhanekom/Downloads/complete'
 
 def extract_rar(path):
     test_proc = subprocess.Popen(['unrar', 't', path], stdout=subprocess.PIPE)
@@ -21,7 +21,7 @@ def extract_rar(path):
             break
 
     if files:
-        extract_proc = subprocess.Popen(['unrar', 't', '-y', path], stdout=subprocess.PIPE)
+        extract_proc = subprocess.Popen(['unrar', 'e', '-y', path, os.path.split(path)[0]], stdout=subprocess.PIPE)
         while True:
             out = extract_proc.stdout.readline()
 
@@ -31,7 +31,7 @@ def extract_rar(path):
 
     if clean_files:
         for rar_file in files:
-            os.remove(rar_file)
+	    os.remove(rar_file)
 
 
 if __name__ == "__main__":
@@ -39,6 +39,8 @@ if __name__ == "__main__":
         for filename in fnmatch.filter(filenames, '*.rar'):
             if os.path.isfile(os.path.join(root, filename)):
                 extract_rar(os.path.join(root, filename))
+
+    sys.exit(0)
 
     s = xmlrpclib.ServerProxy(TRANSCODING_SERVER_URL, allow_none=True)
     for root, dirnames, filenames in os.walk(WATCH_PATH):
