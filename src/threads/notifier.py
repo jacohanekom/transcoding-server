@@ -36,16 +36,16 @@ class NotifierThread(utils.Base):
             try:
                 for title in curr_movie['info']['titles']:
                     if title == movie:
-                        print title
                         id_list.append(curr_movie['_id'])
                         break
             except:
                 None
 
         for id in id_list:
-            urllib2.urlopen("{url}/api/{key}/media.delete?id={id}&delete_from=wanted".format(url=url, key=key, id=id))
+            urllib2.urlopen("{url}/api/{key}/media.delete?id={id}".format(url=url, key=key, id=id))
 
-        urllib2.urlopen("{url}/api/{key}/manage.update?full=true".format(url=url, key=key))
+        data = json.load(urllib2.urlopen("{url}/api/{key}/manage.update?full=1".format(url=url, key=key)))
+
 
     def __update_plex__(self, plex_host, plex_port):
         source_type = ['movie', 'show']
@@ -93,7 +93,10 @@ class NotifierThread(utils.Base):
                                                       self.__get_sickbeard_indicator__(file),
                                                       file.destination)
                     elif file.metadata.type == 'movie':
-                        None
+                        self.__mark_movie_as_done__(
+                            super(NotifierThread, self).get_config()['NOTIFIER_COUCHPOTATO_URL'],
+                            super(NotifierThread, self).get_config()['NOTIFIER_COUCHPOTATO_KEY'],
+                            file.metadata.name)
 
                 self.__update_plex__(super(NotifierThread, self).get_config()['NOTIFIER_PLEX_HOST'],
 	                             super(NotifierThread, self).get_config()['NOTIFIER_PLEX_PORT'])
