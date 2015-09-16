@@ -1,10 +1,8 @@
 __author__ = 'jacohanekom'
 
-import utils, time, os
-from hachoir_core.cmd_line import unicodeFilename
-from hachoir_metadata import extractMetadata
-from hachoir_parser import createParser
+import utils, time, os, urllib2, urllib, json
 import sqlite3 as lite
+import xml.dom.minidom as minidom
 
 class NotifierThread(utils.Base):
     def __mark_episode_as_done__(self, show_name, season, episode, status, destination):
@@ -31,7 +29,7 @@ class NotifierThread(utils.Base):
                 con.close()
 
     def __mark_movie_as_done__(self, url, key, movie):
-	data = json.load(urllib2.urlopen("{url}/api/{key}/media.list".format(url=url, key=key)))
+        data = json.load(urllib2.urlopen("{url}/api/{key}/media.list".format(url=url, key=key)))
         id_list = []
 
         for curr_movie in data['movies']:
@@ -49,7 +47,7 @@ class NotifierThread(utils.Base):
 
         urllib2.urlopen("{url}/api/{key}/manage.update?full=true".format(url=url, key=key))
 
-    def __update_plex__(plex_host, plex_port):
+    def __update_plex__(self, plex_host, plex_port):
         source_type = ['movie', 'show']
         base_url = 'http://%s:%s/library/sections' % (plex_host,plex_port)
         refresh_url = '%s/%%s/refresh' % base_url
