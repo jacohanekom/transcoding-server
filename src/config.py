@@ -1,6 +1,6 @@
 __author__ = 'jacohanekom'
 RPC_PORT = 8000
-RPC_LISTENING_INTERFACE = 'localhost'
+RPC_LISTENING_INTERFACE = '0.0.0.0'
 RPC_PATH = '/handbrake'
 MODES = ['threads.HandbrakeThread', 'threads.MetadataThread','threads.PublishThread', 'threads.NotifierThread']
 
@@ -19,4 +19,5 @@ PUBLISH_MOVIES_FOLDER = 'Movies'
 PUBLISH_TVSHOWS_FOLDER = 'TV Shows'
 
 NOTIFIER_SICKBEARD_DATABASE_PATH = '/home/jhanekom/Applications/SickRage/sickbeard.db'
-
+NOTIFIER_PLEX_HOST = '127.0.0.1'
+NOTIFIER_PLEX_PORT = '32400'

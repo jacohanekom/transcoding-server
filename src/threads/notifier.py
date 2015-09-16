@@ -30,10 +30,39 @@ class NotifierThread(utils.Base):
                 con.commit()
                 con.close()
 
-    def __mark_movie_as_done__(self, imdb_id, quality):
-        None
+    def __mark_movie_as_done__(self, url, key, movie):
+	data = json.load(urllib2.urlopen("{url}/api/{key}/media.list".format(url=url, key=key)))
+        id_list = []
 
+        for curr_movie in data['movies']:
+            try:
+                for title in curr_movie['info']['titles']:
+                    if title == movie:
+                        print title
+                        id_list.append(curr_movie['_id'])
+                        break
+            except:
+                None
 
+        for id in id_list:
+            urllib2.urlopen("{url}/api/{key}/media.delete?id={id}&delete_from=wanted".format(url=url, key=key, id=id))
+
+        urllib2.urlopen("{url}/api/{key}/manage.update?full=true".format(url=url, key=key))
+
+    def __update_plex__(plex_host, plex_port):
+        source_type = ['movie', 'show']
+        base_url = 'http://%s:%s/library/sections' % (plex_host,plex_port)
+        refresh_url = '%s/%%s/refresh' % base_url
+
+        try:
+           xml_sections = minidom.parse(urllib.urlopen(base_url))
+           sections = xml_sections.getElementsByTagName('Directory')
+           for s in sections:
+               if s.getAttribute('type') in source_type:
+                  url = refresh_url % s.getAttribute('key')
+                  urllib.urlopen(url)
+        except:
+           None
 
 
     def __get_sickbeard_indicator__(self, file):
@@ -68,6 +97,8 @@ class NotifierThread(utils.Base):
                     elif file.metadata.type == 'movie':
                         None
 
+                self.__update_plex__(super(NotifierThread, self).get_config()['NOTIFIER_PLEX_HOST'],
+	                             super(NotifierThread, self).get_config()['NOTIFIER_PLEX_PORT'])
                 file.status.state = super(NotifierThread, self).state_text(2)
                 super(NotifierThread, self).update_storage(uuid, file)
             time.sleep(60)

@@ -5,8 +5,9 @@ import tvdb_api
 import traceback
 
 class rpcInterface():
-    def __init__(self, registered_files):
+    def __init__(self, registered_files, config):
         self.registered_files = registered_files
+	tmdb.API_KEY = config['METADATA_MOVIE_KEY']
 
     def add_movie_queue(self, file, name, year):
         for already_present in self.registered_files:
@@ -96,7 +97,7 @@ class rpcInterface():
 
                 search = tmdb.Search()
                 search.movie(query=result["name"])
-                for s in search.results:
+		for s in search.results:
                     if 'release_date' in s:
                         if int(s['release_date'][0:4]) == int(result["year"]):
                             return result
@@ -104,7 +105,7 @@ class rpcInterface():
                 return []
             except:
                 print traceback.format_exc()
-                return []
+                return [traceback.format_exc()]
 
         return []
 

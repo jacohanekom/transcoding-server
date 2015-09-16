@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # Create server
     server = SimpleXMLRPCServer((config.RPC_LISTENING_INTERFACE, config.RPC_PORT), requestHandler=RequestHandler, allow_none=True)
     server.register_introspection_functions()
-    server.register_instance(rpcInterface(storage))
+    server.register_instance(rpcInterface(storage, config_dict))
     server.serve_forever()
 
     print "Server is ready"
