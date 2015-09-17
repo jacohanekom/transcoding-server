@@ -141,9 +141,9 @@ class MetadataThread(utils.Base):
                 tags['id'] = show[season][episode]["seasonid"]
                 return tags
             else:
-                return None
+                raise "Unable to find show - {show}".format(show=show_name)
         except:
-            return None
+            raise self.exc_info[1], None, self.exc_info[2]
 
     def __build_plist__(self, values, studio = None):
         formatter = xmlformatter.Formatter(indent='1', indent_char='\t', encoding_output='ISO-8859-1', preserve=['literal'])
