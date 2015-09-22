@@ -114,7 +114,7 @@ class PublishThread(utils.Base):
                         file.status.state = super(PublishThread, self).state_text(2)
                         super(PublishThread, self).update_storage(uuid, file)
                 except:
-                    file.status.state = super(PublishThread, self).state_text(3, sys.exc_info()[0])
+                    file.status.state = super(PublishThread, self).state_text(3, traceback.format_exc())
                     super(PublishThread, self).update_storage(uuid, file)
 
             time.sleep(60)
