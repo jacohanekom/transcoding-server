@@ -83,27 +83,33 @@ class PublishThread(utils.Base):
                             if not os.path.isdir(destination[0]):
                                 os.makedirs(destination[0])
 
-                            if os.path.isfile(os.path.join(destination[0], destination[1])):
-                                os.remove(os.path.join(destination[0], destination[1]))
+                            destination = os.path.join(destination[0], destination[1]).replace("'","")
 
-                            result = os.system("cp '%s' '%s'" % (converted_file, (os.path.join(destination[0], destination[1]))))
+                            if os.path.isfile(destination):
+                                os.remove(destination)
+
+                            result = os.system("cp '%s' '%s'" % (converted_file, destination))
                             if result != 0:
                                 raise Exception("Unable to copy file")
+
 
                             os.remove(converted_file)
                             os.remove(file.file)
                         elif file.metadata.type == 'movie':
                             destination = self.__get_movie_destination__(file)
 
-                            if not os.path.isdir(destination[0]):
-                                os.makedirs(destination[0])
+                            if not os.path.isdir(destination[0].replace("'","")):
+                                os.makedirs(destination[0].replace("'",""))
 
-                            if os.path.isfile(os.path.join(destination[0], destination[1])):
-                                os.remove(os.path.join(destination[0], destination[1]))
+                            destination = os.path.join(destination[0], destination[1]).replace("'","")
 
-                            result = os.system("cp '%s' '%s'" % (converted_file, (os.path.join(destination[0], destination[1]))))
+                            if os.path.isfile(destination):
+                                os.remove(destination)
+
+                            result = os.system("cp '%s' '%s'" % (converted_file, destination))
                             if result != 0:
                                 raise Exception("Unable to copy file")
+
 
                             os.remove(converted_file)
                             os.remove(file.file)
