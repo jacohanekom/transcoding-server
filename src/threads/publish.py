@@ -72,8 +72,8 @@ class PublishThread(utils.Base):
     def ftp_copy_files(self, source, destination, ftp=None):
         if ftp is None:
             ftp_host = super(PublishThread, self).get_config()['PUBLISH_FTP_HOST']
-            ftp_username = super(PublishThread, self).get_config()['PUBLISH_FTP_HOST']
-            ftp_password = super(PublishThread, self).get_config()['PUBLISH_FTP_PASSWORD']
+            ftp_username = super(PublishThread, self).get_config()['PUBLISH_USER_NAME']
+            ftp_password = super(PublishThread, self).get_config()['PUBLISH_PASSWORD']
 
             ftp = ftplib.FTP(ftp_host, ftp_username, ftp_password)
 
@@ -112,6 +112,8 @@ class PublishThread(utils.Base):
                             destination = self.__get_movie_destination__(file)
 
                         self.ftp_copy_files(source_file, destination)
+                        os.remove(source_file)
+                        os.remove(file.file)
 
                         file.status.state = super(PublishThread, self).state_text(2)
                         super(PublishThread, self).update_storage(uuid, file)
