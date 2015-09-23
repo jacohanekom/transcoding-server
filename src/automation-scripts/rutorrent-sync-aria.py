@@ -237,7 +237,7 @@ elif sys.argv[1] == 'aria':
                 new_published_downloads.append({"aria":aria_id, "remote_path": file})
             elif ariaInterface.is_download_done(aria_id):
                 file = ariaInterface.get_destination_files(aria_id)
-                destination = ariaCompleteDir + file[len(ariaIncompleteDir)]
+                destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
                 print destination
 
