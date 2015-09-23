@@ -1,6 +1,6 @@
 __author__ = 'Jaco-Hanekom'
 
-import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys
+import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys, fnmatch
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -157,8 +157,6 @@ rTorrentUsername = "jhanekom"
 rTorrentPassword = "9nJwx702Qj"
 rUser = "jaco"
 rTorrentSeedingDays=4
-
-TranscodingEnabled = True
 TranscodingServer = 'http://localhost:8000/handbrake'
 
 wwwUser = "user-jhanekom"
@@ -253,3 +251,23 @@ elif sys.argv[1] == 'aria':
 
         published_downloads = new_published_downloads
         time.sleep(10)
+elif sys.argv[1] == "local_watch":
+    s = xmlrpclib.ServerProxy(TranscodingServer, allow_none=True)
+    for root, dirnames, filenames in os.walk(ariaCompleteDir):
+        for filename in fnmatch.filter(filenames, '*'):
+            file = os.path.join(root, filename).replace(ariaCompleteDir,'')
+
+            try:
+                result = s.guess_details(file)
+
+                if len(result) > 0:
+                    if result["type"] == "tv":
+                        year = None
+                        if "year" in result:
+                            year = result["year"]
+
+                        s.add_tv_show_queue(os.path.join(root, filename), result["show"], result["season"], result["episode"], result["double_episode"], year)
+                    elif result["type"] == "movie":
+                        s.add_movie_queue(os.path.join(root, filename), result["name"], result["year"])
+            except:
+                print "Do not publish {file}".format(file=file)
