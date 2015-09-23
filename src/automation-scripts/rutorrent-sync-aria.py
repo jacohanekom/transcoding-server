@@ -239,12 +239,14 @@ elif sys.argv[1] == 'aria':
                 file = ariaInterface.get_destination_files(aria_id)
                 destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
-                print destination
+                ariaInterface.purge_download(aria_id)
+                remoteInterface.delete_files(remote_file)
 
-                #ariaInterface.purge_download(aria_id)
-                #remoteInterface.delete_files(remote_file)
+                if os.path.exists(destination):
+                    os.remove(destination)
 
-
+                os.makedirs(os.path.dirname(destination))
+                os.rename(file, destination)
 
             elif ariaInterface.is_download_error(aria_id):
                 ariaInterface.purge_download(aria_id)
