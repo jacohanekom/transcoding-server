@@ -217,11 +217,10 @@ elif sys.argv[1] == 'rtorrent':
 elif sys.argv[1] == 'aria':
     ariaInterface = aria(ariaURL, ariaPort)
     published_downloads = []
+    base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
 
-    for file in remoteInterface.get_file_list(
-            "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)):
-        print file
-        print os.path.join(ariaIncompleteDir,file)
+    for file in remoteInterface.get_file_list(base_dir):
+        print file[len(base_dir):]
         sys.exit(0)
         aria_id = ariaInterface.register_download(
             remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file)))
