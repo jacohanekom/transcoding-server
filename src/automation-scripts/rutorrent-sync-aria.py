@@ -220,6 +220,8 @@ elif sys.argv[1] == 'aria':
 
     for file in remoteInterface.get_file_list(
             "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)):
+        print os.path.dirname(os.path.join(ariaIncompleteDir,file))
+        sys.exit(0)
         aria_id = ariaInterface.register_download(
             remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file)))
         published_downloads.append({"aria":aria_id, "remote_path": file})
@@ -237,24 +239,26 @@ elif sys.argv[1] == 'aria':
                 ariaInterface.purge_download(aria_id)
                 remoteInterface.delete_files(remote_file)
 
-                if TranscodingEnabled:
-                    try:
-                        rpc_client = xmlrpclib.ServerProxy(TranscodingServer, allow_none=True)
-                        path = ariaInterface.get_destination_files(aria_id)
+                print ariaInterface.get_destination_files(aria_id)
 
-                        result = rpc_client.guess_details(path)
+                #if TranscodingEnabled:
+                #    try:
+                #        rpc_client = xmlrpclib.ServerProxy(TranscodingServer, allow_none=True)
+                #        path = ariaInterface.get_destination_files(aria_id)
 
-                        if len(result) > 0:
-                            if result["type"] == "tv":
-                                year = None
-                                if "year" in result:
-                                    year = result["year"]
+                #        result = rpc_client.guess_details(path)
 
-                                rpc_client.add_tv_show_queue(path, result["show"], result["season"], result["episode"], result["double_episode"], year)
-                        elif result["type"] == "movie":
-                            rpc_client.add_movie_queue(path, result["name"], result["year"])
-                    except:
-                        None
+                #        if len(result) > 0:
+                #            if result["type"] == "tv":
+               #                 year = None
+               #                 if "year" in result:
+               #                     year = result["year"]
+
+                #                rpc_client.add_tv_show_queue(path, result["show"], result["season"], result["episode"], result["double_episode"], year)
+                #        elif result["type"] == "movie":
+                #            rpc_client.add_movie_queue(path, result["name"], result["year"])
+                #    except:
+                #        None
 
             elif ariaInterface.is_download_error(aria_id):
                 ariaInterface.purge_download(aria_id)
