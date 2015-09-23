@@ -93,57 +93,25 @@ class PublishThread(utils.Base):
             for uuid in super(PublishThread, self).get_available_files():
                 file = super(PublishThread, self).get_storage(uuid)
                 try:
-                    converted_file = os.path.join(tempfile.gettempdir(), uuid +
-                                                  super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
+                    source_file = os.path.join(tempfile.gettempdir(), uuid +
+                            super(PublishThread, self).get_config()['HANDBRAKE_EXTENSION'])
 
                     file.status.state = super(PublishThread, self).state_text(1)
                     super(PublishThread, self).update_storage(uuid, file)
-                    destination = None
 
-                    if not self.__has_metadata__(super(PublishThread, self).get_config()['METADATA_ATOMIC_PARSLEY'], converted_file):
+                    if not self.__has_metadata__(super(PublishThread, self).get_config()['METADATA_ATOMIC_PARSLEY'],
+                                                 source_file):
                         #try and download metadata again
                         file.status.state = super(PublishThread, self).state_text(4)
                         super(PublishThread, self).update_storage(uuid, file)
                     else :
+                        destination = None
                         if file.metadata.type == 'tv':
                             destination = self.__get_series_destination__(file)
-
-                            if not os.path.isdir(destination[0]):
-                                os.makedirs(destination[0])
-
-                            destination = os.path.join(destination[0], destination[1])
-
-                            if os.path.isfile(destination):
-                                os.remove(destination)
-
-                            result = os.system("cp '%s' '%s'" % (converted_file, destination))
-                            if result != 0:
-                                raise Exception("Unable to copy file")
-
-
-                            os.remove(converted_file)
-                            os.remove(file.file)
-                        elif file.metadata.type == 'movie':
+                        else:
                             destination = self.__get_movie_destination__(file)
 
-                            if not os.path.isdir(destination[0].replace("'","")):
-                                os.makedirs(destination[0].replace("'",""))
-
-                            destination = os.path.join(destination[0], destination[1]).replace("'","")
-
-                            if os.path.isfile(destination):
-                                os.remove(destination)
-
-                            result = os.system("cp '%s' '%s'" % (converted_file, destination))
-                            if result != 0:
-                                raise Exception("Unable to copy file")
-
-
-                            os.remove(converted_file)
-                            os.remove(file.file)
-
-                        if destination:
-                            setattr(file, "destination", destination)
+                        self.ftp_copy_files(source_file, destination)
 
                         file.status.state = super(PublishThread, self).state_text(2)
                         super(PublishThread, self).update_storage(uuid, file)
