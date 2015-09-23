@@ -62,10 +62,10 @@ class PublishThread(utils.Base):
     def ftp_create_dir_recursively(self, ftp, directory):
         ftp.cwd("/")
 
-        for dir in directory.split("/"):
+        for dir in directory.split("/")[1:-1]:
             try:
                 ftp.cwd(dir)
-            except IOError:
+            except:
                 ftp.mkd(dir)
                 ftp.cwd(dir)
 
@@ -78,12 +78,12 @@ class PublishThread(utils.Base):
             ftp = ftplib.FTP(ftp_host, ftp_username, ftp_password)
 
         self.ftp_create_dir_recursively(ftp, directory=destination[0])
-        ftp.cwd(destination)
+        ftp.cwd(destination[0])
 
         try:
             ftp.delete(destination[1])
         except:
-            print "File not present"
+            None
 
         ftp.storbinary('STOR {file}'.format(file=destination[1]), open(source, 'rb'))
 
@@ -120,4 +120,3 @@ class PublishThread(utils.Base):
                     super(PublishThread, self).update_storage(uuid, file)
 
             time.sleep(60)
-
