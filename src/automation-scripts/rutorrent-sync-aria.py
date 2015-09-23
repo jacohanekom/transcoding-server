@@ -241,8 +241,8 @@ elif sys.argv[1] == 'aria':
 
                 print destination
 
-                ariaInterface.purge_download(aria_id)
-                remoteInterface.delete_files(remote_file)
+                #ariaInterface.purge_download(aria_id)
+                #remoteInterface.delete_files(remote_file)
 
 
 
