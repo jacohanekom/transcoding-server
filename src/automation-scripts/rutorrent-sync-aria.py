@@ -220,7 +220,8 @@ elif sys.argv[1] == 'aria':
 
     for file in remoteInterface.get_file_list(
             "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)):
-        print os.path.dirname(os.path.join(ariaIncompleteDir,file))
+        print file
+        print os.path.join(ariaIncompleteDir,file)
         sys.exit(0)
         aria_id = ariaInterface.register_download(
             remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file)))
