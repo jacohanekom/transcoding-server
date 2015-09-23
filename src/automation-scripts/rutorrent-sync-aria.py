@@ -219,11 +219,9 @@ elif sys.argv[1] == 'aria':
     base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
 
     for file in remoteInterface.get_file_list(base_dir):
-        if file.endswith(".sfv"):
-            aria_id = ariaInterface.register_download(
-                remoteInterface.get_http_url(file, wwwUser), os.path.dirname(ariaIncompleteDir + file[len(base_dir):]))
-            published_downloads.append({"aria":aria_id, "remote_path": file})
-            break
+        aria_id = ariaInterface.register_download(
+            remoteInterface.get_http_url(file, wwwUser), os.path.dirname(ariaIncompleteDir + file[len(base_dir):]))
+        published_downloads.append({"aria":aria_id, "remote_path": file})
 
     while len(published_downloads) > 0:
         new_published_downloads = []
