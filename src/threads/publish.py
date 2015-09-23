@@ -1,6 +1,6 @@
 import os, sys
 import time
-import shutil
+import ftplib
 import tempfile
 import utils
 import subprocess, traceback
@@ -59,6 +59,34 @@ class PublishThread(utils.Base):
         else:
             return True
 
+    def ftp_create_dir_recursively(self, ftp, directory):
+        ftp.cwd("/")
+
+        for dir in directory.split("/"):
+            try:
+                ftp.cwd(dir)
+            except IOError:
+                ftp.mkd(dir)
+                ftp.cwd(dir)
+
+    def ftp_copy_files(self, source, destination, ftp=None):
+        if ftp is None:
+            ftp_host = super(PublishThread, self).get_config()['PUBLISH_FTP_HOST']
+            ftp_username = super(PublishThread, self).get_config()['PUBLISH_FTP_HOST']
+            ftp_password = super(PublishThread, self).get_config()['PUBLISH_FTP_PASSWORD']
+
+            ftp = ftplib.FTP(ftp_host, ftp_username, ftp_password)
+
+        self.ftp_create_dir_recursively(ftp, directory=destination[0])
+        ftp.cwd(destination)
+
+        try:
+            ftp.delete(destination[1])
+        except:
+            print "File not present"
+
+        ftp.storbinary('STOR {file}'.format(file=destination[1]), open(source, 'rb'))
+
     def run(self):
         print 'Starting ' + super(PublishThread, self).get_name()
         while True:
@@ -83,7 +111,7 @@ class PublishThread(utils.Base):
                             if not os.path.isdir(destination[0]):
                                 os.makedirs(destination[0])
 
-                            destination = os.path.join(destination[0], destination[1]).replace("'","")
+                            destination = os.path.join(destination[0], destination[1])
 
                             if os.path.isfile(destination):
                                 os.remove(destination)
@@ -124,3 +152,4 @@ class PublishThread(utils.Base):
                     super(PublishThread, self).update_storage(uuid, file)
 
             time.sleep(60)
+
