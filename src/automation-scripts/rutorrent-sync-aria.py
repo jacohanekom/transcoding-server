@@ -222,6 +222,7 @@ elif sys.argv[1] == 'aria':
 
     for file in remoteInterface.get_file_list(base_dir):
         if file.endswith(".nfo"):
+            print remoteInterface.get_http_url(file, wwwUser)
             aria_id = ariaInterface.register_download(
                 remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file[len(base_dir):])))
             published_downloads.append({"aria":aria_id, "remote_path": file})
