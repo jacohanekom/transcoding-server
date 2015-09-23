@@ -236,10 +236,12 @@ elif sys.argv[1] == 'aria':
             if ariaInterface.is_download_in_progress(aria_id):
                 new_published_downloads.append({"aria":aria_id, "remote_path": file})
             elif ariaInterface.is_download_done(aria_id):
+                file = ariaInterface.get_destination_files(aria_id)
+
                 ariaInterface.purge_download(aria_id)
                 remoteInterface.delete_files(remote_file)
 
-                print ariaInterface.get_destination_files(aria_id)
+                print file
 
                 #if TranscodingEnabled:
                 #    try:
