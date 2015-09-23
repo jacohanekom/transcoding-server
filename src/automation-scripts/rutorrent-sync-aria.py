@@ -165,6 +165,7 @@ wwwUser = "user-jhanekom"
 ariaURL = "192.168.0.2"
 ariaPort = 6800
 ariaIncompleteDir = "/home/jhanekom/Downloads/incomplete"
+ariaCompleteDir = "/home/jhanekom/Downloads/complete"
 
 def copy_torrent(torrent):
     files = torrentInterface.get_file_lists(torrent)
@@ -220,12 +221,11 @@ elif sys.argv[1] == 'aria':
     base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
 
     for file in remoteInterface.get_file_list(base_dir):
-        print file[len(base_dir):]
-        sys.exit(0)
-        aria_id = ariaInterface.register_download(
-            remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file)))
-        published_downloads.append({"aria":aria_id, "remote_path": file})
-        break
+        if file.endswith(".nfo"):
+            aria_id = ariaInterface.register_download(
+                remoteInterface.get_http_url(file, wwwUser), os.path.dirname(os.path.join(ariaIncompleteDir,file[len(base_dir):])))
+            published_downloads.append({"aria":aria_id, "remote_path": file})
+            break
 
     while len(published_downloads) > 0:
         new_published_downloads = []
