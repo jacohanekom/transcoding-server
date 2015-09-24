@@ -214,11 +214,11 @@ else:
                                 for path in torrentInterface.get_file_lists(hash):
                                     remoteInterface.delete_files(path)
                                 torrentInterface.remove_torrent(hash)
+                            else:
+                                new_copied_files[hash] = previous_processed_torrents[hash]
                         else:
-                            new_copied_files[hash] = previous_processed_torrents[hash]
-                    else:
-                        copy_torrent(hash)
-                        new_copied_files[hash] = time.strftime("%Y-%m-%d")
+                            copy_torrent(hash)
+                            new_copied_files[hash] = time.strftime("%Y-%m-%d")
 
             remoteInterface.write_index_file(new_copied_files, rUser)
         elif sys.argv[1] == 'aria':
