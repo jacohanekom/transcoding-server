@@ -223,7 +223,7 @@ class Downloader(threading.Thread):
                     remote_file = download["remote_path"]
 
                     if aria_interface.is_download_in_progress(aria_id):
-                        new_published_downloads.append({"aria":aria_id, "remote_path": file})
+                        new_published_downloads.append({"aria":aria_id, "remote_path": remote_file})
                     elif aria_interface.is_download_done(aria_id):
                         file = aria_interface.get_destination_files(aria_id)
                         destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
