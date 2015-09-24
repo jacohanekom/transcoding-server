@@ -67,13 +67,12 @@ class remoteIO():
         self.ssh.exec_command('mkdir -p "{directory}"'.format(directory=os.path.dirname(destination)))
         self.ssh.exec_command('cp "{source}" "{destination}"'.format(source=source, destination=destination))
 
-    def get_file_list(self, path, file_list=None):
-        if file_list is None:
-            file_list = []
+    def get_file_list(self, path):
+        file_list = []
 
         for dir in self.sftp.listdir(path=path):
             if int(oct(self.sftp.stat(os.path.join(path, dir)).st_mode)[0:2]) == 4:
-                file_list += self.get_file_list(os.path.join(path, dir),  file_list=file_list)
+                file_list += self.get_file_list(os.path.join(path, dir))
             else:
                 file_list.append(os.path.join(path, dir))
 
