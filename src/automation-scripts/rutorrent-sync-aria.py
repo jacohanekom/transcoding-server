@@ -287,9 +287,9 @@ if __name__== "__main__":
     ariaCompleteDir = "/home/jhanekom/Downloads/complete"
 
     seedbox = Seedbox()
-    #downloader = Downloader()
-    #transcoder = Transcoder()
+    downloader = Downloader()
+    transcoder = Transcoder()
 
     seedbox.start()
-    #downloader.start()
-    #transcoder.start()
+    downloader.start()
+    transcoder.start()
