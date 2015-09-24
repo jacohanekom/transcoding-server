@@ -1,5 +1,5 @@
 __author__ = 'Jaco-Hanekom'
-
+#!/usr/bin/env python
 import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading
 
 class ruTorrent():
