@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading
+import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading, sys
+import logging
+import operator
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -63,18 +65,31 @@ class remoteIO():
         self.username = username
         self.password = password
 
+    def close(self):
+        self.ssh.close()
+        self.sftp.close()
+
     def copy_files(self, source, destination):
         self.ssh.exec_command('mkdir -p "{directory}"'.format(directory=os.path.dirname(destination)))
         self.ssh.exec_command('cp "{source}" "{destination}"'.format(source=source, destination=destination))
 
+    def __merge_two_dicts__(self, x, y):
+        '''Given two dicts, merge them into a new dict as a shallow copy.'''
+        z = x.copy()
+        z.update(y)
+        return z
+
     def get_file_list(self, path):
-        file_list = []
+        file_list = {}
 
         for dir in self.sftp.listdir(path=path):
             if int(oct(self.sftp.stat(os.path.join(path, dir)).st_mode)[0:2]) == 4:
-                file_list += self.get_file_list(os.path.join(path, dir))
+                file_list = self.__merge_two_dicts__(file_list, self.get_file_list(os.path.join(path, dir)))
             else:
-                file_list.append(os.path.join(path, dir))
+                utime = self.sftp.stat(os.path.join(path, dir)).st_mtime
+                last_modified = datetime.datetime.fromtimestamp(utime)
+
+                file_list[os.path.join(path, dir)] = last_modified
 
         return file_list
 
@@ -152,12 +167,17 @@ class aria(object):
 
 
 class Seedbox (threading.Thread):
-    def copy_torrent(remote_interface, torrent_interface, torrent):
+    def __init__(self, logger):
+        threading.Thread.__init__(self)
+        self.logger = logger
+
+    def copy_torrent(self, remote_interface, torrent_interface, torrent):
         files = torrent_interface.get_file_lists(torrent)
         files_to_ignore = []
 
         for file in files:
             if file.endswith("rar"):
+                self.logger.info("Unzipping file - {file}".format(file = file))
                 path = os.path.dirname(file).replace("/home/{rUser}/data/{user}/torrents".format(rUser=rTorrentUsername,user=rUser),
                                           "/home/{rUser}/data/{user}/watch".format(rUser=rTorrentUsername, user=rUser))
                 files_to_ignore = remote_interface.remote_unrar(file, path)
@@ -170,17 +190,27 @@ class Seedbox (threading.Thread):
                     break
 
             if process_file:
+                self.logger.info("Copying file to watch directory - {file}".format(file=file))
                 destination = file.replace("/home/{rUser}/data/{user}/torrents".format(rUser=rTorrentUsername,user=rUser),
                                 "/home/{rUser}/data/{user}/watch".format(rUser=rTorrentUsername, user=rUser))
                 remote_interface.copy_files(file, destination)
 
     def run(self):
         while True:
+            remote_interface = None
+
             try:
+                self.logger.info("Running the seedbox thread")
+
+                self.logger.info("Connecting to the seedbox using ssh")
                 remote_interface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
+
+                self.logger.info("Connecting to the rTorrent interface")
                 torrent_interface = ruTorrent(rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser)
 
                 previous_processed_torrents = remote_interface.get_index_file(rUser)
+                logger.info("Previous torrents detected as {processed_torrent}".format(
+                    processed_torrent=previous_processed_torrents))
                 new_copied_files = dict()
 
                 for hash in torrent_interface.get_torrent_indicators():
@@ -190,36 +220,57 @@ class Seedbox (threading.Thread):
                                 torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
                                 if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
                                     datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
+                                    self.logger.info("Cleaning up torrent - {torrent}".format(torrrent=hash))
                                     for path in torrent_interface.get_file_lists(hash):
                                         remote_interface.delete_files(path)
                                     torrent_interface.remove_torrent(hash)
                                 else:
+                                    self.logger.info("No changes on torrent - {torrent}".format(torrent=hash))
                                     new_copied_files[hash] = previous_processed_torrents[hash]
                             else:
+                                self.logger.info("Registering new torrent - {torrent}".format(torrent=hash))
                                 self.copy_torrent(remote_interface, torrent_interface, hash)
                                 new_copied_files[hash] = time.strftime("%Y-%m-%d")
 
+                self.logger.info("Saving index file")
                 remote_interface.write_index_file(new_copied_files, rUser)
-            except:
-                None
+            except Exception as ie:
+                self.logger.exception(ie)
+            finally:
+                if remote_interface:
+                    remote_interface.close()
 
+            self.logger.info("Done with the Seedbox thread, sleeping for 5 minutes")
             time.sleep(5*60)
 
 
 class Downloader(threading.Thread):
+    def __init__(self, logger):
+        threading.Thread.__init__(self)
+        self.logger = logger
+
     def run(self):
+        remote_interface = None
+
         while True:
             try:
                 published_downloads = []
                 base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
 
+                self.logger.info("Connecting to the local aria downloader")
                 aria_interface = aria(ariaURL, ariaPort)
+                self.logger.info("Connecting to the seedbox")
                 remote_interface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
 
-                for file in remote_interface.get_file_list(base_dir):
+                avail_files = remote_interface.get_file_list(base_dir)
+
+                for curr_file in sorted(avail_files.items(), key=operator.itemgetter(1)):
+                    file = curr_file[0]
                     aria_id = aria_interface.register_download(
                     remote_interface.get_http_url(file, wwwUser), os.path.dirname(ariaIncompleteDir + file[len(base_dir):]))
                     published_downloads.append({"aria":aria_id, "remote_path": file})
+
+                self.logger.info("Available downloads detected as - {download}".format(download=published_downloads))
 
                 while len(published_downloads) > 0:
                     new_published_downloads = []
@@ -231,6 +282,7 @@ class Downloader(threading.Thread):
                             new_published_downloads.append({"aria":aria_id, "remote_path": remote_file})
                         elif aria_interface.is_download_done(aria_id):
                             try:
+                                self.logger.info("Download done of {download}, processing file".format(download=remote_file))
                                 file = aria_interface.get_destination_files(aria_id)
                                 destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
@@ -242,20 +294,30 @@ class Downloader(threading.Thread):
 
                                 os.makedirs(os.path.dirname(destination))
                                 os.rename(file, destination)
-                            except:
-                                None
+                                self.logger.info("Done processing file, {file}".format(file=remote_file))
+                            except Exception as ie:
+                                self.logger.exception(ie)
                         elif aria_interface.is_download_error(aria_id):
+                            self.logger.info("A error occured with download {download}, cleaning up".format(download=remote_file))
                             aria_interface.purge_download(aria_id)
 
                     published_downloads = new_published_downloads
                     time.sleep(10)
-            except:
-                None
+            except Exception as ie:
+                self.logger.exception(ie)
+            finally:
+                if remote_interface:
+                    remote_interface.close()
 
+            self.logger.info("Done with the Downloader thread, sleeping for 5 minutes")
             time.sleep(5*60)
 
 
 class Transcoder(threading.Thread):
+    def __init__(self, logger):
+        threading.Thread.__init__(self)
+        self.logger = logger
+
     def run(self):
         while True:
             try:
@@ -264,9 +326,11 @@ class Transcoder(threading.Thread):
                 for root, dirnames, filenames in os.walk(ariaCompleteDir):
                     for filename in fnmatch.filter(filenames, '*'):
                         file = os.path.join(root, filename).replace(ariaCompleteDir,'')
+                        self.logger.info("Detected file to process - {file}".format(file=file))
 
                         try:
                             result = s.guess_details(file)
+                            self.logger.info("File guessed as - {guess}".format(guess=result))
 
                             if len(result) > 0:
                                 if result["type"] == "tv":
@@ -274,14 +338,17 @@ class Transcoder(threading.Thread):
                                     if "year" in result:
                                         year = result["year"]
 
+                                    self.logger.info("Publishing tv show file to the transcoder queue")
                                     s.add_tv_show_queue(os.path.join(root, filename), result["show"], result["season"], result["episode"], result["double_episode"], year)
                                 elif result["type"] == "movie":
+                                    self.logger.info("Publishing movie to the transcoder queue")
                                     s.add_movie_queue(os.path.join(root, filename), result["name"], result["year"])
-                        except:
-                            print "Do not publish {file}".format(file=file)
-            except:
-                None
+                        except Exception as ie:
+                            self.logger.exception(ie)
+            except Exception as ie:
+                self.logger.exception(ie)
 
+            self.logger.info("Done with the Transcoder thread, sleeping for 5 minutes")
             time.sleep(5*60)
 
 
@@ -300,10 +367,29 @@ if __name__== "__main__":
     ariaIncompleteDir = "/home/jhanekom/Downloads/incomplete"
     ariaCompleteDir = "/home/jhanekom/Downloads/complete"
 
-    seedbox = Seedbox()
-    downloader = Downloader()
-    transcoder = Transcoder()
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
-    seedbox.start()
-    downloader.start()
-    transcoder.start()
+    # create a file handler
+    handler = logging.FileHandler(os.path.join(os.path.dirname(sys.argv[0]),"rutorrent-sync-aria.log"))
+    handler.setLevel(logging.DEBUG)
+
+    # create a logging format
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    # add the handlers to the logger
+    logger.addHandler(handler)
+
+    logger.info("Starting the application")
+
+    logger.info("Starting the seedbox")
+    Seedbox(logger).start()
+
+    logger.info("Starting the downloader")
+    Downloader(logger).start()
+
+    logger.info("Starting the transcoder")
+    Transcoder(logger).start()
+
+    logger.info("All threads started up successfully")
