@@ -193,8 +193,8 @@ else:
     global lock_socket   # Without this our lock gets garbage collected
 
     try:
-        #lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        #lock_socket.bind('\0' + sys.argv[1])
+        lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        lock_socket.bind('\0' + sys.argv[1])
 
         remoteInterface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
 
