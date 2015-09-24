@@ -229,6 +229,9 @@ class Downloader(threading.Thread):
                         destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
                         aria_interface.purge_download(aria_id)
+
+                        #reconnect the ssh interface, as it probably timed out
+                        remote_interface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
                         remote_interface.delete_files(remote_file)
 
                         if os.path.exists(destination):
