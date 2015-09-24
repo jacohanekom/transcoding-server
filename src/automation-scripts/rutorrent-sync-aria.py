@@ -1,6 +1,6 @@
 __author__ = 'Jaco-Hanekom'
 
-import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys, fnmatch, socket
+import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys, fnmatch, socket, traceback
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -276,4 +276,4 @@ else:
                 except:
                     print "Do not publish {file}".format(file=file)
     except:
-        print "Already running"
+        print(traceback.format_exc())
