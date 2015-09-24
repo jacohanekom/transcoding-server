@@ -193,8 +193,8 @@ else:
     global lock_socket   # Without this our lock gets garbage collected
 
     try:
-        lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        lock_socket.bind('\0' + sys.argv[1])
+        #lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        #lock_socket.bind('\0' + sys.argv[1])
 
         remoteInterface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
 
@@ -205,19 +205,20 @@ else:
             new_copied_files = dict()
 
             for hash in torrentInterface.get_torrent_indicators():
-                if torrentInterface.torrent_user(hash) == rUser and torrentInterface.is_torrent_seeding(hash):
-                    if hash in previous_processed_torrents.keys():
-                        torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
-                        if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
-                            datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
-                            for path in torrentInterface.get_file_lists(hash):
-                                remoteInterface.delete_files(path)
-                            torrentInterface.remove_torrent(hash)
+                if torrentInterface.torrent_user(hash) == rUser:
+                    if torrentInterface.is_torrent_seeding(hash):
+                        if hash in previous_processed_torrents.keys():
+                            torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
+                            if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
+                                datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
+                                for path in torrentInterface.get_file_lists(hash):
+                                    remoteInterface.delete_files(path)
+                                torrentInterface.remove_torrent(hash)
+                        else:
+                            new_copied_files[hash] = previous_processed_torrents[hash]
                     else:
-                        new_copied_files[hash] = previous_processed_torrents[hash]
-                else:
-                    copy_torrent(hash)
-                    new_copied_files[hash] = time.strftime("%Y-%m-%d")
+                        copy_torrent(hash)
+                        new_copied_files[hash] = time.strftime("%Y-%m-%d")
 
             remoteInterface.write_index_file(new_copied_files, rUser)
         elif sys.argv[1] == 'aria':
