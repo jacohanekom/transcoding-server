@@ -190,7 +190,7 @@ class Seedbox (threading.Thread):
                             if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
                                 datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
                                 for path in torrent_interface.get_file_lists(hash):
-                                    torrent_interface.delete_files(path)
+                                    remote_interface.delete_files(path)
                                 torrent_interface.remove_torrent(hash)
                             else:
                                 new_copied_files[hash] = previous_processed_torrents[hash]
@@ -287,9 +287,9 @@ if __name__== "__main__":
     ariaCompleteDir = "/home/jhanekom/Downloads/complete"
 
     seedbox = Seedbox()
-    downloader = Downloader()
-    transcoder = Transcoder()
+    #downloader = Downloader()
+    #transcoder = Transcoder()
 
     seedbox.start()
-    downloader.start()
-    transcoder.start()
+    #downloader.start()
+    #transcoder.start()
