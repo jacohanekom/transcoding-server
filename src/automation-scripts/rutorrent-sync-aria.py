@@ -1,6 +1,6 @@
 __author__ = 'Jaco-Hanekom'
 
-import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys, fnmatch
+import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, sys, fnmatch, socket
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -187,85 +187,93 @@ def copy_torrent(torrent):
                                 "/home/{rUser}/data/{user}/watch".format(rUser=rTorrentUsername, user=rUser))
             remoteInterface.copy_files(file, destination)
 
-remoteInterface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
-
 if len(sys.argv) == 1:
     print "Please specify atleast one argument"
-elif sys.argv[1] == 'rtorrent':
-    torrentInterface = ruTorrent(rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser)
+else:
+    global lock_socket   # Without this our lock gets garbage collected
 
-    previous_processed_torrents = remoteInterface.get_index_file(rUser)
-    new_copied_files = dict()
+    try:
+        lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        lock_socket.bind('\0' + sys.argv[1])
 
-    for hash in torrentInterface.get_torrent_indicators():
-        if torrentInterface.torrent_user(hash) == rUser and torrentInterface.is_torrent_seeding(hash):
-            if hash in previous_processed_torrents.keys():
-                torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
-                if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
-                    datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
-                    for path in torrentInterface.get_file_lists(hash):
-                        remoteInterface.delete_files(path)
-                    torrentInterface.remove_torrent(hash)
+        remoteInterface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
+
+        if sys.argv[1] == 'rtorrent':
+            torrentInterface = ruTorrent(rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser)
+
+            previous_processed_torrents = remoteInterface.get_index_file(rUser)
+            new_copied_files = dict()
+
+            for hash in torrentInterface.get_torrent_indicators():
+                if torrentInterface.torrent_user(hash) == rUser and torrentInterface.is_torrent_seeding(hash):
+                    if hash in previous_processed_torrents.keys():
+                        torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
+                        if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
+                            datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
+                            for path in torrentInterface.get_file_lists(hash):
+                                remoteInterface.delete_files(path)
+                            torrentInterface.remove_torrent(hash)
+                    else:
+                        new_copied_files[hash] = previous_processed_torrents[hash]
                 else:
-                    new_copied_files[hash] = previous_processed_torrents[hash]
-            else:
-                copy_torrent(hash)
-                new_copied_files[hash] = time.strftime("%Y-%m-%d")
+                    copy_torrent(hash)
+                    new_copied_files[hash] = time.strftime("%Y-%m-%d")
 
-    remoteInterface.write_index_file(new_copied_files, rUser)
-elif sys.argv[1] == 'aria':
-    ariaInterface = aria(ariaURL, ariaPort)
-    published_downloads = []
-    base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
+            remoteInterface.write_index_file(new_copied_files, rUser)
+        elif sys.argv[1] == 'aria':
+            ariaInterface = aria(ariaURL, ariaPort)
+            published_downloads = []
+            base_dir = "/home/{rTorrentUsername}/data/{rUser}/watch".format(rTorrentUsername=rTorrentUsername, rUser=rUser)
 
-    for file in remoteInterface.get_file_list(base_dir):
-        aria_id = ariaInterface.register_download(
-            remoteInterface.get_http_url(file, wwwUser), os.path.dirname(ariaIncompleteDir + file[len(base_dir):]))
-        published_downloads.append({"aria":aria_id, "remote_path": file})
+            for file in remoteInterface.get_file_list(base_dir):
+                aria_id = ariaInterface.register_download(
+                    remoteInterface.get_http_url(file, wwwUser), os.path.dirname(ariaIncompleteDir + file[len(base_dir):]))
+                published_downloads.append({"aria":aria_id, "remote_path": file})
 
-    while len(published_downloads) > 0:
-        new_published_downloads = []
-        for download in published_downloads:
-            aria_id = download["aria"]
-            remote_file = download["remote_path"]
+            while len(published_downloads) > 0:
+                new_published_downloads = []
+                for download in published_downloads:
+                    aria_id = download["aria"]
+                    remote_file = download["remote_path"]
 
-            if ariaInterface.is_download_in_progress(aria_id):
-                new_published_downloads.append({"aria":aria_id, "remote_path": file})
-            elif ariaInterface.is_download_done(aria_id):
-                file = ariaInterface.get_destination_files(aria_id)
-                destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
+                if ariaInterface.is_download_in_progress(aria_id):
+                    new_published_downloads.append({"aria":aria_id, "remote_path": file})
+                elif ariaInterface.is_download_done(aria_id):
+                    file = ariaInterface.get_destination_files(aria_id)
+                    destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
-                ariaInterface.purge_download(aria_id)
-                remoteInterface.delete_files(remote_file)
+                    ariaInterface.purge_download(aria_id)
+                    remoteInterface.delete_files(remote_file)
 
-                if os.path.exists(destination):
-                    os.remove(destination)
+                    if os.path.exists(destination):
+                        os.remove(destination)
 
-                os.makedirs(os.path.dirname(destination))
-                os.rename(file, destination)
+                    os.makedirs(os.path.dirname(destination))
+                    os.rename(file, destination)
+                elif ariaInterface.is_download_error(aria_id):
+                    ariaInterface.purge_download(aria_id)
 
-            elif ariaInterface.is_download_error(aria_id):
-                ariaInterface.purge_download(aria_id)
+            published_downloads = new_published_downloads
+            time.sleep(10)
+        elif sys.argv[1] == "local_watch":
+            s = xmlrpclib.ServerProxy(TranscodingServer, allow_none=True)
+            for root, dirnames, filenames in os.walk(ariaCompleteDir):
+                for filename in fnmatch.filter(filenames, '*'):
+                    file = os.path.join(root, filename).replace(ariaCompleteDir,'')
 
-        published_downloads = new_published_downloads
-        time.sleep(10)
-elif sys.argv[1] == "local_watch":
-    s = xmlrpclib.ServerProxy(TranscodingServer, allow_none=True)
-    for root, dirnames, filenames in os.walk(ariaCompleteDir):
-        for filename in fnmatch.filter(filenames, '*'):
-            file = os.path.join(root, filename).replace(ariaCompleteDir,'')
+                try:
+                    result = s.guess_details(file)
 
-            try:
-                result = s.guess_details(file)
+                    if len(result) > 0:
+                        if result["type"] == "tv":
+                            year = None
+                            if "year" in result:
+                                year = result["year"]
 
-                if len(result) > 0:
-                    if result["type"] == "tv":
-                        year = None
-                        if "year" in result:
-                            year = result["year"]
-
-                        s.add_tv_show_queue(os.path.join(root, filename), result["show"], result["season"], result["episode"], result["double_episode"], year)
-                    elif result["type"] == "movie":
-                        s.add_movie_queue(os.path.join(root, filename), result["name"], result["year"])
-            except:
-                print "Do not publish {file}".format(file=file)
+                            s.add_tv_show_queue(os.path.join(root, filename), result["show"], result["season"], result["episode"], result["double_episode"], year)
+                        elif result["type"] == "movie":
+                            s.add_movie_queue(os.path.join(root, filename), result["name"], result["year"])
+                except:
+                    print "Do not publish {file}".format(file=file)
+    except:
+        print "Already running"
