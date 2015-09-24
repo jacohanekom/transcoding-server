@@ -225,17 +225,20 @@ class Downloader(threading.Thread):
                     if aria_interface.is_download_in_progress(aria_id):
                         new_published_downloads.append({"aria":aria_id, "remote_path": remote_file})
                     elif aria_interface.is_download_done(aria_id):
-                        file = aria_interface.get_destination_files(aria_id)
-                        destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
+                        try:
+                            file = aria_interface.get_destination_files(aria_id)
+                            destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
 
-                        aria_interface.purge_download(aria_id)
-                        remote_interface.delete_files(remote_file)
+                            aria_interface.purge_download(aria_id)
+                            remote_interface.delete_files(remote_file)
 
-                        if os.path.exists(destination):
-                            os.remove(destination)
+                            if os.path.exists(destination):
+                                os.remove(destination)
 
-                        os.makedirs(os.path.dirname(destination))
-                        os.rename(file, destination)
+                            os.makedirs(os.path.dirname(destination))
+                            os.rename(file, destination)
+                        except:
+                            None
                     elif aria_interface.is_download_error(aria_id):
                         aria_interface.purge_download(aria_id)
 
