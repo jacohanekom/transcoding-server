@@ -292,7 +292,9 @@ class Downloader(threading.Thread):
                                 if os.path.exists(destination):
                                     os.remove(destination)
 
-                                os.makedirs(os.path.dirname(destination))
+                                if not os.path.exists(os.path.dirname(destination)):
+                                    os.makedirs(os.path.dirname(destination))
+
                                 os.rename(file, destination)
                                 self.logger.info("Done processing file, {file}".format(file=remote_file))
                             except Exception as ie:
