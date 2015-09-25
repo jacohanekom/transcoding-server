@@ -81,6 +81,8 @@ class rpcInterface():
                     result["double_episode"] = 0
                     result["episode"] = guess["episodeNumber"]
 
+                print result
+
                 t = tvdb_api.Tvdb()
                 if t[result["show"]][result["season"]][result["episode"]]["episodename"] is None:
                     return []
