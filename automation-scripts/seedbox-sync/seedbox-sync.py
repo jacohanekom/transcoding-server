@@ -3,6 +3,8 @@
 import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading, sys
 import logging
 import operator
+from guessit import PY2, u, guess_file_info
+import tvdb_api, tvdb_exceptions
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -245,9 +247,72 @@ class Seedbox (threading.Thread):
 
 
 class Downloader(threading.Thread):
+    show_mapper = {"Scandal (US)":"Scandal (2012)"}
+
     def __init__(self, logger):
         threading.Thread.__init__(self)
         self.logger = logger
+
+    def guess_details(self, path):
+        result = {}
+        guess = guess_file_info(path, info='filename')
+
+        if guess['type'] == "episode":
+            name = guess['series']
+
+            if name in self.show_mapper:
+                name = self.show_mapper[name]
+
+            result["type"] = "tv"
+            result["show"] = name
+            result["season"] = guess["season"]
+
+            if guess.has_key("year"):
+                result["year"] = guess["year"]
+
+            if guess.has_key("episodeList"):
+                result["double_episode"] = 1
+                result["episode"] = guess["episodeList"][0]
+            else:
+                result["double_episode"] = 0
+                result["episode"] = guess["episodeNumber"]
+
+            t = tvdb_api.Tvdb()
+            if t[name][result["season"]][result["episode"]]["episodename"] is None:
+                return []
+            else:
+                result['name'] = t[name][result["season"]][result["episode"]]["episodename"]
+                return result
+
+            return result
+        elif guess['type'] == "movie":
+            result["type"] = "movie"
+            result["name"] = guess["title"]
+            result["year"] = guess["year"]
+
+            return result
+
+        return []
+
+    def __get_destination__(self, details, extension):
+        if details['type'] == 'tv':
+            if details['double_episode'] == 0:
+                output = "{show} - S{season}E{episode} - {showname}{ext}".format(
+                    show = details["show"], season = str(details["season"]).zfill(2),
+                    episode = str(details["episode"]).zfill(2), showname = str(details["name"]),
+                    ext = extension)
+            else:
+                output = "{show} - S{season}E{episode}-E{episode1} - {showname}{ext}".format(
+                    show = details["show"], season = str(details["season"]).zfill(2),
+                    episode = str(details["episode"]).zfill(2), showname = str(details["name"]),
+                    ext = extension, episode1 = str(int(details["episode"])+1).zfill(2))
+
+            return os.path.join(ariaCompleteDir, "TV Shows", details["show"], 'Season ' +
+                             str(details["season"]).zfill(2), output)
+        elif details['type'] == 'movie':
+            path = "{name} ({year}){ext}".format(name=details["name"], year=details["year"],ext=extension)
+
+            return os.path.join(ariaCompleteDir, "Movies", path)
 
     def run(self):
         remote_interface = None
@@ -285,6 +350,16 @@ class Downloader(threading.Thread):
                                 self.logger.info("Download done of {download}, processing file".format(download=remote_file))
                                 file = aria_interface.get_destination_files(aria_id)
                                 destination = ariaCompleteDir + file[len(ariaIncompleteDir):]
+
+                                if isRenameEnabled:
+                                    try:
+                                        file_details = download.guess_details(
+                                            file[len(ariaIncompleteDir):]), os.path.splitext(file)[1]
+
+                                        if len(file_details) > 0:
+                                            destination = download.__get_destination__(file_details)
+                                    except:
+                                        None
 
                                 aria_interface.purge_download(aria_id)
                                 remote_interface.delete_files(remote_file)
@@ -367,6 +442,7 @@ if __name__== "__main__":
     ariaPort = 6800
     ariaIncompleteDir = "/home/jhanekom/Downloads/incomplete"
     ariaCompleteDir = "/home/jhanekom/Downloads/complete"
+    isRenameEnabled = False
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
