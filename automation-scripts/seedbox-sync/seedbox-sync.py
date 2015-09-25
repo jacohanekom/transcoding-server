@@ -220,7 +220,7 @@ class Seedbox (threading.Thread):
                                 torrent_complete = time.strptime(previous_processed_torrents[hash], "%Y-%m-%d")
                                 if ( datetime.datetime(*torrent_complete[:6]) + datetime.timedelta(days=rTorrentSeedingDays)) < \
                                     datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0):
-                                    self.logger.info("Cleaning up torrent - {torrent}".format(torrrent=hash))
+                                    self.logger.info("Cleaning up torrent - {torrent}".format(torrent=hash))
                                     for path in torrent_interface.get_file_lists(hash):
                                         remote_interface.delete_files(path)
                                     torrent_interface.remove_torrent(hash)

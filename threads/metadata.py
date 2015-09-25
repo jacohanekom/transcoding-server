@@ -265,13 +265,15 @@ class MetadataThread(utils.Base):
     def get_hd_tag(self, video):
         result = 0
 
-        file_metadata = extractMetadata(createParser(unicodeFilename(video)))
-        if file_metadata.get('width') == 1280:
-            result = 1
-        elif file_metadata.get('width') == 1920:
-            result = 2
+        try:
+            file_metadata = extractMetadata(createParser(unicodeFilename(video)))
+            if file_metadata.get('width') == 1280:
+                result = 1
+            elif file_metadata.get('width') == 1920:
+                result = 2
+        finally:
+            return result
 
-        return result
 
     def __init__(self, registered_files, config):
         super(MetadataThread, self).__init__(registered_files, config)

@@ -110,7 +110,7 @@ class SickRage():
 class MediaHandler(PatternMatchingEventHandler):
     patterns = ["*.m4v"]
 
-    rage = SickRage("http://127.0.0.1/sickrage", "C:\Users\Jaco-Hanekom\sickbeard.db")
+    rage = SickRage("http://127.0.0.1/sickrage", "/home/jhanekom/Applications/SickRage/sickbeard.db")
     couchPotato = CouchPotato("http://127.0.0.1/couchpotato", "716e4e6d9d764d8cafb6bf46cf4f2dd2")
     plex = Plex('127.0.0.1',32400)
 
