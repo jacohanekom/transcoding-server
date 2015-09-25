@@ -70,7 +70,7 @@ class rpcInterface():
         if guess['type'] == "episode":
             try:
                 show = guess["series"]
-                if result["show"] in show_mapper:
+                if show in show_mapper:
                     show = show_mapper['show']
 
                 result["type"] = "tv"
