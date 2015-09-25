@@ -62,13 +62,19 @@ class rpcInterface():
         return self.registered_files[uuid]
 
     def guess_details(self, path):
+        show_mapper = {"Scandal (US)":"Scandal (2012)"}
+
         result = {}
         guess = guess_file_info(path, info='filename')
 
         if guess['type'] == "episode":
             try:
+                show = guess["series"]
+                if result["show"] in show_mapper:
+                    show = show_mapper['show']
+
                 result["type"] = "tv"
-                result["show"] = guess["series"]
+                result["show"] = show
                 result["season"] = guess["season"]
 
                 if guess.has_key("year"):
