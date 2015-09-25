@@ -62,12 +62,17 @@ class PublishThread(utils.Base):
     def ftp_create_dir_recursively(self, ftp, directory):
         ftp.cwd("/")
 
-        for dir in directory.split("/")[1:-1]:
+        for dir in directory.split("/")[1:]:
+            if dir.endswith("/"):
+                clean_dir = dir[:-1]
+            else:
+                clean_dir = dir
+
             try:
-                ftp.cwd(dir)
+                ftp.cwd(clean_dir)
             except:
-                ftp.mkd(dir)
-                ftp.cwd(dir)
+                ftp.mkd(clean_dir)
+                ftp.cwd(clean_dir)
 
     def ftp_copy_files(self, source, destination, ftp=None):
         if ftp is None:
