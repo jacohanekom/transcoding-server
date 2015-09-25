@@ -353,7 +353,6 @@ class Transcoder(threading.Thread):
             self.logger.info("Done with the Transcoder thread, sleeping for 5 minutes")
             time.sleep(5*60)
 
-
 if __name__== "__main__":
     #main interface
     rTorrentURL = "fr27463.pulsedmedia.com"
