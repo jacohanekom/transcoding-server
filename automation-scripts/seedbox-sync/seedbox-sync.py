@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading, sys
+import xmlrpclib, paramiko, os, tempfile, uuid, json, time, datetime, fnmatch, threading, sys, socket
 import logging
 import operator
 from guessit import PY2, u, guess_file_info
-import tvdb_api, tvdb_exceptions
+import tvdb_api
 
 class ruTorrent():
     def __init__(self, rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser):
@@ -66,6 +66,18 @@ class remoteIO():
         self.host = host
         self.username = username
         self.password = password
+
+    def check_connection(self):
+        try:
+            self.ssh.exec_command('ls')
+        except socket.error as e:
+            self.ssh = paramiko.SSHClient()
+            self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            self.ssh.connect(self.host, username=self.username, password=self.password)
+
+            transport = paramiko.Transport((self.host, 22))
+            transport.connect(username=self.username, password=self.password)
+            self.sftp = paramiko.SFTPClient.from_transport(transport)
 
     def close(self):
         self.ssh.close()
@@ -169,9 +181,10 @@ class aria(object):
 
 
 class Seedbox (threading.Thread):
-    def __init__(self, logger):
+    def __init__(self, logger, remoteIO):
         threading.Thread.__init__(self)
         self.logger = logger
+        self.remoteIO = remoteIO
 
     def copy_torrent(self, remote_interface, torrent_interface, torrent):
         files = torrent_interface.get_file_lists(torrent)
@@ -198,17 +211,18 @@ class Seedbox (threading.Thread):
                 remote_interface.copy_files(file, destination)
 
     def run(self):
-        while True:
-            remote_interface = None
+        remote_interface = self.remoteIO
 
+        while True:
             try:
                 self.logger.info("Running the seedbox thread")
-
                 self.logger.info("Connecting to the seedbox using ssh")
-                remote_interface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
 
                 self.logger.info("Connecting to the rTorrent interface")
                 torrent_interface = ruTorrent(rTorrentURL, rTorrentUsername, rTorrentPassword, wwwUser)
+
+                self.logger.info('Checking the connection and reconnecting if necessasary')
+                remote_interface.check_connection()
 
                 previous_processed_torrents = remote_interface.get_index_file(rUser)
                 logger.info("Previous torrents detected as {processed_torrent}".format(
@@ -238,9 +252,6 @@ class Seedbox (threading.Thread):
                 remote_interface.write_index_file(new_copied_files, rUser)
             except Exception as ie:
                 self.logger.exception(ie)
-            finally:
-                if remote_interface:
-                    remote_interface.close()
 
             self.logger.info("Done with the Seedbox thread, sleeping for 5 minutes")
             time.sleep(5*60)
@@ -249,9 +260,10 @@ class Seedbox (threading.Thread):
 class Downloader(threading.Thread):
     show_mapper = {"Scandal (US)":"Scandal (2012)"}
 
-    def __init__(self, logger):
+    def __init__(self, logger, remoteIO):
         threading.Thread.__init__(self)
         self.logger = logger
+        self.remoteIO = remoteIO
 
     def guess_details(self, path):
         result = {}
@@ -315,7 +327,7 @@ class Downloader(threading.Thread):
             return os.path.join(ariaCompleteDir, "Movies", path)
 
     def run(self):
-        remote_interface = None
+        remote_interface = self.remoteIO
 
         while True:
             try:
@@ -324,8 +336,10 @@ class Downloader(threading.Thread):
 
                 self.logger.info("Connecting to the local aria downloader")
                 aria_interface = aria(ariaURL, ariaPort)
+
                 self.logger.info("Connecting to the seedbox")
-                remote_interface = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
+                self.logger.info('Checking the connection and reconnecting if necessasary')
+                remote_interface.check_connection()
 
                 avail_files = remote_interface.get_file_list(base_dir)
 
@@ -382,9 +396,6 @@ class Downloader(threading.Thread):
                     time.sleep(10)
             except Exception as ie:
                 self.logger.exception(ie)
-            finally:
-                if remote_interface:
-                    remote_interface.close()
 
             self.logger.info("Done with the Downloader thread, sleeping for 5 minutes")
             time.sleep(5*60)
@@ -460,11 +471,14 @@ if __name__== "__main__":
 
     logger.info("Starting the application")
 
+    logger.info("Connecting to the seedbox")
+    remoteIO = remoteIO(rTorrentURL, rTorrentUsername, rTorrentPassword)
+
     logger.info("Starting the seedbox")
-    Seedbox(logger).start()
+    Seedbox(logger, remoteIO).start()
 
     logger.info("Starting the downloader")
-    Downloader(logger).start()
+    Downloader(logger, remoteIO).start()
 
     logger.info("Starting the transcoder")
     Transcoder(logger).start()
