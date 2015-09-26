@@ -17,6 +17,6 @@ METADATA_MOVIE_KEY = '24318688f151a0bbdc3042c313b35244'
 PUBLISH_FTP_HOST = '192.168.0.2'
 PUBLISH_USER_NAME = 'jhanekom'
 PUBLISH_PASSWORD = 'Dell840320@'
-PUBLISH_MOUNTS = {'/media/media_a_g': '0-71','/media/media_h_q': '73-81','/media/media_r_s': '82-83', '/media/media_t_z':'84-127'}
+PUBLISH_MOUNTS = {'/media/media_a_g': '0-71','/media/media_h_q': '72-81','/media/media_r_s': '82-83', '/media/media_t_z':'84-127'}
 PUBLISH_MOVIES_FOLDER = 'Movies'
 PUBLISH_TVSHOWS_FOLDER = 'TV Shows'
