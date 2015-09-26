@@ -85,7 +85,9 @@ class remoteIO():
 
     def copy_files(self, source, destination):
         self.ssh.exec_command('mkdir -p "{directory}"'.format(directory=os.path.dirname(destination)))
+        time.sleep(10)
         self.ssh.exec_command('cp "{source}" "{destination}"'.format(source=source, destination=destination))
+        time.sleep(10)
 
     def __merge_two_dicts__(self, x, y):
         '''Given two dicts, merge them into a new dict as a shallow copy.'''
